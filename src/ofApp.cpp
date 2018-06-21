@@ -90,7 +90,7 @@ void ofApp::keyPressed(int key){
 //--------------------------------------------------------------
 void ofApp::retrieveVideos(){
     
-    if (response.open( serverURL + "/getpath?num_neighbors=1&duration=5&order="+vidSeqOrder+"&start_id="+ofToString(vidSeqEndId))) {
+    if (response.open( serverURL + "/getpath?num_neighbors=10&duration=5&order="+vidSeqOrder+"&start_id="+ofToString(vidSeqEndId))) {
         
         vector<string> videoFiles;
         vector<ofVec2f> timeStartEnd;
@@ -103,7 +103,7 @@ void ofApp::retrieveVideos(){
             float end_time = response["scenes"][i]["end_time"].asFloat();
             videoFiles.push_back(file);
             timeStartEnd.push_back(ofVec2f(start_time, end_time));
-            cout << response["scenes"][i] << endl;
+//            cout << response["scenes"][i] << endl;
         }
         
         vidSeqStartId = response["scenes"][0]["start_id"].asInt();

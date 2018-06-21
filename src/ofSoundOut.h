@@ -50,7 +50,7 @@ public:
         // Mixer 2
         cout << "\n[ofxAudioUnit] Output devices\n";
         outputBass1.listOutputDevices();
-        outputBass1.setDevice(213); // Bluetooth bass
+        outputBass1.setDevice(62); // Bluetooth bass
         //
         mixer2.setInputBusCount(1);
         source4.connectTo(lowpass2).connectTo(tap4).connectTo(mixer2, 0);
