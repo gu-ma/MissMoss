@@ -35,12 +35,19 @@ public:
     // SOUND
     ofSoundOut soundOut;
     
-    // Video Sequence
+    // VIDEO SEQUENCE
     ofxJSONElement response;
     ofVideoSequence videoSequence;
     int vidSeqStartId, vidSeqEndId;
     string vidSeqOrder;
-    void retrieveVideos();
+    vector<string> videoFiles;
+    vector<ofVec2f> timeStartEnd;
+    void getVideosPath(string & vidSeqOrder, int & startId, vector<string> & videoFiles, vector<ofVec2f> & timeStartEnd);
     string serverURL;
+
+    
+    // GENERAL
+    bool tripStarted;
+    int tripTime;
 
 };

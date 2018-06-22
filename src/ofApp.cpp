@@ -24,8 +24,8 @@ void ofApp::setup(){
     serverURL = "http://127.0.0.1:5002";
     vidSeqOrder = "StartToEnd";
     vidSeqEndId = -1;
-    retrieveVideos();
-
+    getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd);
+    videoSequence.init(videoFiles, timeStartEnd);
 }
 
 //--------------------------------------------------------------
@@ -47,7 +47,10 @@ void ofApp::update(){
     
     // Video Sequence
     videoSequence.update();
-    if ( videoSequence.isFinished() ) retrieveVideos();
+    if ( videoSequence.isFinished() ) {
+        getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd);
+        videoSequence.init(videoFiles, timeStartEnd);
+    }
 
 }
 
@@ -72,13 +75,8 @@ void ofApp::keyPressed(int key){
         esp.volume = MIN(esp.volume, 1);
     }
     
-    if( key == 's' ){
-        esp.soundStream.start();
-    }
-    
-    if( key == 'e' ){
-        esp.soundStream.stop();
-    }
+    if( key == 's' ) esp.soundStream.start();
+    if( key == 'e' ) esp.soundStream.stop();
     
     // SoundOut
     if(key == 'l') soundOut.lowpass2.showUI();
@@ -88,20 +86,21 @@ void ofApp::keyPressed(int key){
     if ( key == ' ' ) {
         vidSeqEndId = -1;
         vidSeqOrder = "StartToEnd";
-        retrieveVideos();
+        getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd);
+        videoSequence.init(videoFiles, timeStartEnd);
     }
 
 }
 
 //--------------------------------------------------------------
-void ofApp::retrieveVideos(){
+void ofApp::getVideosPath(string & vidSeqOrder, int & vidSeqEndId, vector<string> & videoFiles, vector<ofVec2f> & timeStartEnd){
     
     if (response.open( serverURL + "/getpath?num_neighbors=10&duration=5&order="+vidSeqOrder+"&start_id="+ofToString(vidSeqEndId))) {
         
-        vector<string> videoFiles;
-        vector<ofVec2f> timeStartEnd;
-        
         int numScenes = response["scenes"].size();
+        
+        videoFiles.clear();
+        timeStartEnd.clear();
         
         for (Json::ArrayIndex i = 0; i < numScenes; ++i) {
             string file = response["scenes"][i]["file"].asString();
@@ -109,15 +108,11 @@ void ofApp::retrieveVideos(){
             float end_time = response["scenes"][i]["end_time"].asFloat();
             videoFiles.push_back(file);
             timeStartEnd.push_back(ofVec2f(start_time, end_time));
-//            cout << response["scenes"][i] << endl;
+            cout << response["scenes"][i] << endl;
         }
         
         vidSeqStartId = response["scenes"][0]["start_id"].asInt();
         vidSeqEndId = response["scenes"][numScenes-1]["end_id"].asInt();
-        cout << vidSeqStartId << endl;
-        cout << vidSeqEndId << endl;
-        
-        videoSequence.init(videoFiles, timeStartEnd);
         
         vidSeqOrder = ( vidSeqOrder == "StartToEnd" ) ? "EndToStart" : "StartToEnd";
         

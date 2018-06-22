@@ -80,7 +80,7 @@ public:
     VideoLoop loop1, loop2;
     bool finished;
     
-    void init(vector<string> videoFiles, vector<ofVec2f> timeStartEnd){
+    void init(vector<string> & videoFiles, vector<ofVec2f> & timeStartEnd){
         this->videoFiles = videoFiles;
         this->timeStartEnd = timeStartEnd;
         this->numScenes = videoFiles.size();
@@ -90,6 +90,12 @@ public:
         loadNextVideo(this->loop2);
         this->loop1.start();
         activeLoop = 1;
+    }
+    
+    void add(vector<string> & videoFiles, vector<ofVec2f> & timeStartEnd){
+        this->videoFiles.insert(this->videoFiles.end(), videoFiles.begin(), videoFiles.end());
+        this->timeStartEnd.insert(this->timeStartEnd.end(), timeStartEnd.begin(), timeStartEnd.end());
+        this->numScenes = this->videoFiles.size();
     }
     
     void update() {
