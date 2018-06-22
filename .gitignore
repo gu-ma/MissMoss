@@ -31,4 +31,7 @@
 # other
 *.mov
 *.sqlite3
-*.mp3
+*.DS_Store
+
+# Xcode craps
+*.xcuserstate
