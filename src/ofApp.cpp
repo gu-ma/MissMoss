@@ -29,7 +29,7 @@ void ofApp::update(){
     
     // Smooth the variation from the ESP
     t = (t < inertia) ? t+1 : 0;
-    smoothedVariation[t] = esp.data_point_var_norm;
+    smoothedVariation[t] = esp.data_point_var_norm_smoothed;
     float sum = accumulate(smoothedVariation.begin(), smoothedVariation.end(), 0.0);
     float v = sum / inertia;
     if (ofGetElapsedTimeMillis() % 4 == 0) {
@@ -76,9 +76,8 @@ void ofApp::keyPressed(int key){
     }
     
     // SoundOut
-    if(key == 'l') {
-        soundOut.lowpass2.showUI();
-    }
+    if(key == 'l') soundOut.lowpass2.showUI();
+    if(key == 'd') soundOut.distortion.showUI();
     
     // VideoSequence
     if ( key == ' ' ) {

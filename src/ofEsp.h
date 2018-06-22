@@ -72,7 +72,7 @@ public:
         phase = 0;
         phaseAdder = 0.0f;
         phaseAdderTarget = 0.0f;
-        volume = 0.005f;
+        volume = 0.015f;
         bNoise = true;
         
         lAudio.assign(bufferSize, 0.0);
@@ -156,7 +156,7 @@ public:
         
         string buf;
         buf = "listening for osc messages on port " + ofToString(OSC_PORT);
-        ofDrawBitmapString(buf, 10, 20);
+        ofDrawBitmapString(buf, 60, 70);
         
         buf = "data point average: " + ofToString(data_point_avg);
         buf += "\ndata point Variation: " + ofToString(data_point_var);
@@ -166,14 +166,14 @@ public:
         buf += "\ndata point Variation norm smoothed: " + ofToString(data_point_var_norm_smoothed);
         buf += "\nPredicted Label: " + ofToString(predicted_label);
         buf += "\n\nphaseAdderTarget: " + ofToString(phaseAdderTarget);
-        ofDrawBitmapString(buf, 10, 40);
+        ofDrawBitmapString(buf, 60, 90);
         
         string txt;
         if ( predicted_label == 1 ) txt = "No hands";
         else if ( predicted_label == 2 ) txt = "Hovering";
         else if ( predicted_label == 3 ) txt = "Tickling";
         else if ( predicted_label == 4 ) txt = "Touching";
-        font.drawString(txt, 10,340);
+        font.drawString(txt, 50, 420);
         
         data_point_line.getSmoothed(5).draw();
     }
