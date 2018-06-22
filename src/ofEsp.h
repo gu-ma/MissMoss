@@ -26,11 +26,14 @@ public:
     vector<double> data_point;
     int data_point_var;
     int data_point_avg;
+    int data_point_max_smoothed;
+    int data_point_min_smoothed;
     int predicted_label;
-    float data_point_var_norm;
+    float data_point_var_norm, data_point_var_norm_smoothed;
     
     ofPolyline data_point_line;
-    
+
+    //----- Sound
     ofSoundStream soundStream;
     
     float pan;
@@ -109,6 +112,15 @@ public:
             
             // data point variation norm
             else if(m.getAddress() == "/data_point/var_norm") data_point_var_norm = m.getArgAsFloat(0);
+
+            // data point variation norm smoothed
+            else if(m.getAddress() == "/data_point/var_norm_smoothed") data_point_var_norm_smoothed = m.getArgAsFloat(0);
+
+            // data point variation max smoothed
+            else if(m.getAddress() == "/data_point/max_smoothed") data_point_max_smoothed = m.getArgAsInt32(0);
+            
+            // data point variation min smoothed
+            else if(m.getAddress() == "/data_point/min_smoothed") data_point_min_smoothed = m.getArgAsInt32(0);
             
             // data point variation
             else if(m.getAddress() == "/data_point/var") data_point_var = m.getArgAsInt32(0);
@@ -126,6 +138,8 @@ public:
                     }
                 }
             }
+            cout << data_point_max_smoothed << endl;
+
         }
         
         //----- SOUND
@@ -145,9 +159,12 @@ public:
         ofDrawBitmapString(buf, 10, 20);
         
         buf = "data point average: " + ofToString(data_point_avg);
-        buf += "\ndata point variation: " + ofToString(data_point_var);
-        buf += "\ndata point variation norm: " + ofToString(data_point_var_norm);
-        buf += "\npredicted label: " + ofToString(predicted_label);
+        buf += "\ndata point Variation: " + ofToString(data_point_var);
+        buf += "\ndata point Variation norm: " + ofToString(data_point_var_norm);
+        buf += "\ndata point Max smoothed: " + ofToString(data_point_max_smoothed);
+        buf += "\ndata point Min smoothed: " + ofToString(data_point_min_smoothed);
+        buf += "\ndata point Variation norm smoothed: " + ofToString(data_point_var_norm_smoothed);
+        buf += "\nPredicted Label: " + ofToString(predicted_label);
         buf += "\n\nphaseAdderTarget: " + ofToString(phaseAdderTarget);
         ofDrawBitmapString(buf, 10, 40);
         

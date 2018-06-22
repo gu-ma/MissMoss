@@ -7,11 +7,13 @@ void ofApp::setup(){
 //    ofSetFrameRate(60);
     ofBackground(0);
     
-    // Smooth variation setup
+    // ESP
     t = 0;
     inertia = 500;
-    smoothedVariation.assign(500, 0);
+    smoothedVariation.assign(inertia, 0);
     esp.setup();
+    
+    // Sound
     soundOut.setup();
     
     // Video Sequence
