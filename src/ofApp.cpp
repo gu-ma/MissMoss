@@ -8,6 +8,10 @@ void ofApp::setup(){
     ofBackground(0);
     
     // ESP
+    // 1 = "No hands"
+    // 2 = "Hovering";
+    // 3 = "Tickling";
+    // 4 = "Touching";
     t = 0;
     inertia = 500;
     smoothedVariation.assign(inertia, 0);
@@ -31,7 +35,8 @@ void ofApp::update(){
     t = (t < inertia) ? t+1 : 0;
     smoothedVariation[t] = esp.data_point_var_norm_smoothed;
     float sum = accumulate(smoothedVariation.begin(), smoothedVariation.end(), 0.0);
-    float v = sum / inertia;
+//    float v = sum / inertia;
+    float v = ofMap(mouseX, 0, ofGetWidth(), 0, 1);
     if (ofGetElapsedTimeMillis() % 4 == 0) {
         soundOut.variation1 = ofMap(v, .95, 0, 0, 1);
     }
