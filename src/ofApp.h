@@ -42,12 +42,13 @@ public:
     string vidSeqOrder;
     vector<string> videoFiles;
     vector<ofVec2f> timeStartEnd;
-    void getVideosPath(string & vidSeqOrder, int & startId, vector<string> & videoFiles, vector<ofVec2f> & timeStartEnd);
     string serverURL;
-
+    void getVideosPath(string & vidSeqOrder, int & startId, vector<string> & videoFiles, vector<ofVec2f> & timeStartEnd);
+    void getSimilarVideos(int & vidSeqEndId, vector<string> & videoFiles, vector<ofVec2f> & timeStartEnd);
+    int parseResponse(ofxJSONElement & response, vector<string> & videoFiles, vector<ofVec2f> & timeStartEnd);
     
     // GENERAL
-    bool tripStarted;
-    int tripTime;
+    int mode;
+    int elapsedTime;
 
 };

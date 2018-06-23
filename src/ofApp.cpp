@@ -24,9 +24,19 @@ void ofApp::setup(){
     serverURL = "http://127.0.0.1:5002";
     vidSeqOrder = "StartToEnd";
     vidSeqEndId = -1;
-    getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd);
+    // Load the first round of videos
+    getSimilarVideos(vidSeqEndId, videoFiles, timeStartEnd);
     videoSequence.init(videoFiles, timeStartEnd);
-    getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd);
+    getSimilarVideos(vidSeqEndId, videoFiles, timeStartEnd);
+    
+    // Misc
+    // 1 = "No hands"
+    // 2 = "Hovering";
+    // 3 = "Tickling";
+    // 4 = "Touching";
+    mode = 1;
+    elapsedTime = 0;
+
 }
 
 //--------------------------------------------------------------
@@ -45,14 +55,22 @@ void ofApp::update(){
     // ESP
     esp.update();
     soundOut.update();
-    
+    mode = esp.predicted_label == 1;
+
     // Video Sequence
     videoSequence.update();
-    if ( videoSequence.isFinished() ) {
-        cout << " YO ---> ";
-        cout << videoFiles.size() << endl;
-        videoSequence.add(videoFiles, timeStartEnd);
-        getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd);
+    // If mode is 'Idle'
+    if (mode == 1) {
+//        if ( videoSequence.isFinished() ) {
+//            videoSequence.add(videoFiles, timeStartEnd);
+//            getSimilarVideos(vidSeqEndId, videoFiles, timeStartEnd);
+//        }
+    // Else if 'Touching'
+    } else if (mode == 4) {
+        if ( videoSequence.isFinished() ) {
+            videoSequence.add(videoFiles, timeStartEnd);
+            getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd);
+        }
     }
 
 }
@@ -69,6 +87,10 @@ void ofApp::draw(){
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
 
+    // To test
+    if( key == 1 ) mode = 1;
+    if( key == 4 ) mode = 4;
+    
     // ESP - Sound
     if (key == '-' || key == '_' ){
         esp.volume -= 0.001;
@@ -77,7 +99,6 @@ void ofApp::keyPressed(int key){
         esp.volume += 0.001;
         esp.volume = MIN(esp.volume, 1);
     }
-    
     if( key == 's' ) esp.soundStream.start();
     if( key == 'e' ) esp.soundStream.stop();
     
@@ -91,35 +112,39 @@ void ofApp::keyPressed(int key){
         vidSeqOrder = "StartToEnd";
         getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd);
         videoSequence.init(videoFiles, timeStartEnd);
+        getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd);
     }
 
 }
 
 //--------------------------------------------------------------
 void ofApp::getVideosPath(string & vidSeqOrder, int & vidSeqEndId, vector<string> & videoFiles, vector<ofVec2f> & timeStartEnd){
-    
     if (response.open( serverURL + "/getpath?num_neighbors=10&duration=5&order="+vidSeqOrder+"&start_id="+ofToString(vidSeqEndId))) {
-        
-        int numScenes = response["scenes"].size();
-        
-        videoFiles.clear();
-        timeStartEnd.clear();
-        
-        for (Json::ArrayIndex i = 0; i < numScenes; ++i) {
-            string file = response["scenes"][i]["file"].asString();
-            float start_time = response["scenes"][i]["start_time"].asFloat();
-            float end_time = response["scenes"][i]["end_time"].asFloat();
-            videoFiles.push_back(file);
-            timeStartEnd.push_back(ofVec2f(start_time, end_time));
-//            cout << response["scenes"][i] << endl;
-        }
-        
-        vidSeqStartId = response["scenes"][0]["start_id"].asInt();
-        vidSeqEndId = response["scenes"][numScenes-1]["end_id"].asInt();
-        
+        vidSeqEndId = parseResponse(response, videoFiles, timeStartEnd);
         vidSeqOrder = ( vidSeqOrder == "StartToEnd" ) ? "EndToStart" : "StartToEnd";
-        
     }
+}
+
+//--------------------------------------------------------------
+void ofApp::getSimilarVideos(int & vidSeqEndId, vector<string> & videoFiles, vector<ofVec2f> & timeStartEnd){
+    if (response.open( serverURL + "/getsimilarvideos?num_neighbors=10&duration=5&id="+ofToString(vidSeqEndId))) {
+        vidSeqEndId =  parseResponse(response, videoFiles, timeStartEnd);
+    }
+}
+
+//--------------------------------------------------------------
+int ofApp::parseResponse(ofxJSONElement & response, vector<string> & videoFiles, vector<ofVec2f> & timeStartEnd){
+    int numScenes = response["scenes"].size();
+    videoFiles.clear();
+    timeStartEnd.clear();
+    for (Json::ArrayIndex i = 0; i < numScenes; ++i) {
+        string file = response["scenes"][i]["file"].asString();
+        float start_time = response["scenes"][i]["start_time"].asFloat();
+        float end_time = response["scenes"][i]["end_time"].asFloat();
+        videoFiles.push_back(file);
+        timeStartEnd.push_back(ofVec2f(start_time, end_time));
+    }
+    return response["scenes"][numScenes-1]["end_id"].asInt();
 }
 
 //--------------------------------------------------------------
