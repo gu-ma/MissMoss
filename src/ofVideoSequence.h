@@ -81,6 +81,8 @@ public:
     bool finished;
     
     void init(vector<string> & videoFiles, vector<ofVec2f> & timeStartEnd){
+        this->videoFiles.clear();
+        this->timeStartEnd.clear();
         this->videoFiles = videoFiles;
         this->timeStartEnd = timeStartEnd;
         this->numScenes = videoFiles.size();
@@ -126,14 +128,14 @@ public:
     }
     
     void loadNextVideo(VideoLoop & loop){
-        cout << this->index << endl;
-        cout << this->videoFiles.size() << endl;
-        cout << this->numScenes << endl;
-        // Not good Make it a endless loop
-        if ( this->index == this->numScenes-1 ) this->finished = true;
         loop.init( this->videoFiles[index], this->timeStartEnd[index][0], this->timeStartEnd[index][1], true, 2 );
-//        this->index = ( this->index < this->numScenes-1 ) ? this->index+1 : 0 ;
-        this->index ++;
+        if ( this->index == this->numScenes-1 ) this->finished = true;
+        this->index = ( this->index < this->numScenes-1 ) ? this->index+1 : 0 ;
+        cout << "Index:\t\t\t" + ofToString(this->index) << endl;
+        cout << "VideoFiles Size:\t" + ofToString(this->videoFiles.size()) << endl;
+        cout << "NumScenes:\t\t" + ofToString(this->numScenes) << endl;
+        cout << "Finished:\t\t\t" + ofToString(this->finished) << endl;
+//        this->index ++;
     }
     
     bool isFinished() { return this->finished; }

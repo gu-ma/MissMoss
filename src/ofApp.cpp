@@ -21,13 +21,19 @@ void ofApp::setup(){
     soundOut.setup();
     
     // Video Sequence
+    vidSeqPathNumVideos = 10;
+    vidSeqPathVideosDuration = 5;
+    vidSeqSimVidNumVideos = 2;
+    vidSeqSimVidVideosDuration = 10;
     serverURL = "http://127.0.0.1:5002";
+    // Start idle Mode
     vidSeqOrder = "StartToEnd";
     vidSeqEndId = -1;
     // Load the first round of videos
-    getSimilarVideos(vidSeqEndId, videoFiles, timeStartEnd);
+    getSimilarVideos(vidSeqEndId, videoFiles, timeStartEnd, vidSeqSimVidNumVideos, vidSeqSimVidVideosDuration);
     videoSequence.init(videoFiles, timeStartEnd);
-    getSimilarVideos(vidSeqEndId, videoFiles, timeStartEnd);
+    // Prepare the path for the idle mode
+    getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration);
     
     // Misc
     // 1 = "No hands"
@@ -55,21 +61,32 @@ void ofApp::update(){
     // ESP
     esp.update();
     soundOut.update();
-    mode = esp.predicted_label == 1;
 
     // Video Sequence
     videoSequence.update();
-    // If mode is 'Idle'
-    if (mode == 1) {
-//        if ( videoSequence.isFinished() ) {
-//            videoSequence.add(videoFiles, timeStartEnd);
-//            getSimilarVideos(vidSeqEndId, videoFiles, timeStartEnd);
-//        }
-    // Else if 'Touching'
-    } else if (mode == 4) {
+
+    // If 'Touching'
+    if (esp.predicted_label == 4) {
+        if (mode != 4) {
+            // Start the trip mode
+            videoSequence.init(videoFiles, timeStartEnd);
+            getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration);
+            mode = 4;
+        }
         if ( videoSequence.isFinished() ) {
             videoSequence.add(videoFiles, timeStartEnd);
-            getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd);
+            getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration);
+        }
+    // Any other cases
+    } else {
+        if (mode != 1) {
+            // Start the idle mode
+            vidSeqOrder = "StartToEnd";
+            vidSeqEndId = -1;
+            getSimilarVideos(vidSeqEndId, videoFiles, timeStartEnd, vidSeqSimVidNumVideos, vidSeqSimVidVideosDuration);
+            videoSequence.init(videoFiles, timeStartEnd);
+            getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration);
+            mode = 1;
         }
     }
 
@@ -87,9 +104,9 @@ void ofApp::draw(){
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
 
-    // To test
-    if( key == 1 ) mode = 1;
-    if( key == 4 ) mode = 4;
+    // TEMP TEST
+    if( key == '1' ) esp.predicted_label = 1;
+    if( key == '4' ) esp.predicted_label = 4;
     
     // ESP - Sound
     if (key == '-' || key == '_' ){
@@ -110,24 +127,26 @@ void ofApp::keyPressed(int key){
     if ( key == ' ' ) {
         vidSeqEndId = -1;
         vidSeqOrder = "StartToEnd";
-        getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd);
+        getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration);
         videoSequence.init(videoFiles, timeStartEnd);
-        getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd);
+        getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration);
     }
 
 }
 
 //--------------------------------------------------------------
-void ofApp::getVideosPath(string & vidSeqOrder, int & vidSeqEndId, vector<string> & videoFiles, vector<ofVec2f> & timeStartEnd){
-    if (response.open( serverURL + "/getpath?num_neighbors=10&duration=5&order="+vidSeqOrder+"&start_id="+ofToString(vidSeqEndId))) {
+void ofApp::getVideosPath(string & vidSeqOrder, int & vidSeqEndId, vector<string> & videoFiles, vector<ofVec2f> & timeStartEnd, int num_videos, int duration){
+    cout << "---------\nGet video path\n" << endl;
+    if (response.open( serverURL + "/getpath?num_neighbors="+ofToString(num_videos)+"&duration="+ofToString(duration)+"&order="+vidSeqOrder+"&start_id="+ofToString(vidSeqEndId))) {
         vidSeqEndId = parseResponse(response, videoFiles, timeStartEnd);
         vidSeqOrder = ( vidSeqOrder == "StartToEnd" ) ? "EndToStart" : "StartToEnd";
     }
 }
 
 //--------------------------------------------------------------
-void ofApp::getSimilarVideos(int & vidSeqEndId, vector<string> & videoFiles, vector<ofVec2f> & timeStartEnd){
-    if (response.open( serverURL + "/getsimilarvideos?num_neighbors=10&duration=5&id="+ofToString(vidSeqEndId))) {
+void ofApp::getSimilarVideos(int & vidSeqEndId, vector<string> & videoFiles, vector<ofVec2f> & timeStartEnd, int num_videos, int duration){
+    cout << "---------\nGet similar videos\n" << endl;
+    if (response.open( serverURL + "/getsimilarvideos?num_neighbors="+ofToString(num_videos)+"&duration="+ofToString(duration)+"&id="+ofToString(vidSeqEndId))) {
         vidSeqEndId =  parseResponse(response, videoFiles, timeStartEnd);
     }
 }
@@ -143,6 +162,7 @@ int ofApp::parseResponse(ofxJSONElement & response, vector<string> & videoFiles,
         float end_time = response["scenes"][i]["end_time"].asFloat();
         videoFiles.push_back(file);
         timeStartEnd.push_back(ofVec2f(start_time, end_time));
+//        cout << response["scenes"][i] << endl;
     }
     return response["scenes"][numScenes-1]["end_id"].asInt();
 }
