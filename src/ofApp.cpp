@@ -26,6 +26,7 @@ void ofApp::setup(){
     vidSeqEndId = -1;
     getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd);
     videoSequence.init(videoFiles, timeStartEnd);
+    getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd);
 }
 
 //--------------------------------------------------------------
@@ -48,8 +49,10 @@ void ofApp::update(){
     // Video Sequence
     videoSequence.update();
     if ( videoSequence.isFinished() ) {
+        cout << " YO ---> ";
+        cout << videoFiles.size() << endl;
+        videoSequence.add(videoFiles, timeStartEnd);
         getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd);
-        videoSequence.init(videoFiles, timeStartEnd);
     }
 
 }
@@ -108,7 +111,7 @@ void ofApp::getVideosPath(string & vidSeqOrder, int & vidSeqEndId, vector<string
             float end_time = response["scenes"][i]["end_time"].asFloat();
             videoFiles.push_back(file);
             timeStartEnd.push_back(ofVec2f(start_time, end_time));
-            cout << response["scenes"][i] << endl;
+//            cout << response["scenes"][i] << endl;
         }
         
         vidSeqStartId = response["scenes"][0]["start_id"].asInt();

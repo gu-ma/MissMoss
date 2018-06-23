@@ -96,6 +96,7 @@ public:
         this->videoFiles.insert(this->videoFiles.end(), videoFiles.begin(), videoFiles.end());
         this->timeStartEnd.insert(this->timeStartEnd.end(), timeStartEnd.begin(), timeStartEnd.end());
         this->numScenes = this->videoFiles.size();
+        this->finished = false;
     }
     
     void update() {
@@ -126,10 +127,13 @@ public:
     
     void loadNextVideo(VideoLoop & loop){
         cout << this->index << endl;
+        cout << this->videoFiles.size() << endl;
+        cout << this->numScenes << endl;
         // Not good Make it a endless loop
         if ( this->index == this->numScenes-1 ) this->finished = true;
         loop.init( this->videoFiles[index], this->timeStartEnd[index][0], this->timeStartEnd[index][1], true, 2 );
-        this->index = ( this->index < this->numScenes-1 ) ? this->index+1 : 0 ;
+//        this->index = ( this->index < this->numScenes-1 ) ? this->index+1 : 0 ;
+        this->index ++;
     }
     
     bool isFinished() { return this->finished; }
