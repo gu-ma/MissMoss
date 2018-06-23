@@ -23,15 +23,17 @@ void ofApp::setup(){
     // Video Sequence
     vidSeqPathNumVideos = 10;
     vidSeqPathVideosDuration = 5;
+    vidSeqPathfadeDuration = 1;
     vidSeqSimVidNumVideos = 2;
     vidSeqSimVidVideosDuration = 10;
+    vidSeqSimVidfadeDuration = 3;
     serverURL = "http://127.0.0.1:5002";
     // Start idle Mode
     vidSeqOrder = "StartToEnd";
     vidSeqEndId = -1;
     // Load the first round of videos
     getSimilarVideos(vidSeqEndId, videoFiles, timeStartEnd, vidSeqSimVidNumVideos, vidSeqSimVidVideosDuration);
-    videoSequence.init(videoFiles, timeStartEnd);
+    videoSequence.init(videoFiles, timeStartEnd, vidSeqSimVidfadeDuration, true);
     // Prepare the path for the idle mode
     getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration);
     
@@ -69,12 +71,12 @@ void ofApp::update(){
     if (esp.predicted_label == 4) {
         if (mode != 4) {
             // Start the trip mode
-            videoSequence.init(videoFiles, timeStartEnd);
+            videoSequence.init(videoFiles, timeStartEnd, vidSeqPathfadeDuration, false);
             getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration);
             mode = 4;
         }
         if ( videoSequence.isFinished() ) {
-            videoSequence.add(videoFiles, timeStartEnd);
+            videoSequence.add(videoFiles, timeStartEnd, vidSeqPathfadeDuration, false);
             getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration);
         }
     // Any other cases
@@ -84,7 +86,7 @@ void ofApp::update(){
             vidSeqOrder = "StartToEnd";
             vidSeqEndId = -1;
             getSimilarVideos(vidSeqEndId, videoFiles, timeStartEnd, vidSeqSimVidNumVideos, vidSeqSimVidVideosDuration);
-            videoSequence.init(videoFiles, timeStartEnd);
+            videoSequence.init(videoFiles, timeStartEnd, vidSeqSimVidfadeDuration, true);
             getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration);
             mode = 1;
         }
@@ -128,7 +130,7 @@ void ofApp::keyPressed(int key){
         vidSeqEndId = -1;
         vidSeqOrder = "StartToEnd";
         getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration);
-        videoSequence.init(videoFiles, timeStartEnd);
+        videoSequence.init(videoFiles, timeStartEnd, vidSeqPathfadeDuration, true);
         getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration);
     }
 
@@ -136,8 +138,10 @@ void ofApp::keyPressed(int key){
 
 //--------------------------------------------------------------
 void ofApp::getVideosPath(string & vidSeqOrder, int & vidSeqEndId, vector<string> & videoFiles, vector<ofVec2f> & timeStartEnd, int num_videos, int duration){
-    cout << "---------\nGet video path\n" << endl;
-    if (response.open( serverURL + "/getpath?num_neighbors="+ofToString(num_videos)+"&duration="+ofToString(duration)+"&order="+vidSeqOrder+"&start_id="+ofToString(vidSeqEndId))) {
+    cout << "\n---------\nGet video path" << endl;
+    string request = serverURL + "/getpath?num_neighbors="+ofToString(num_videos)+"&duration="+ofToString(duration)+"&order="+vidSeqOrder+"&start_id="+ofToString(vidSeqEndId);
+    cout << request + "\n"<< endl;
+    if (response.open(request)) {
         vidSeqEndId = parseResponse(response, videoFiles, timeStartEnd);
         vidSeqOrder = ( vidSeqOrder == "StartToEnd" ) ? "EndToStart" : "StartToEnd";
     }
@@ -145,8 +149,10 @@ void ofApp::getVideosPath(string & vidSeqOrder, int & vidSeqEndId, vector<string
 
 //--------------------------------------------------------------
 void ofApp::getSimilarVideos(int & vidSeqEndId, vector<string> & videoFiles, vector<ofVec2f> & timeStartEnd, int num_videos, int duration){
-    cout << "---------\nGet similar videos\n" << endl;
-    if (response.open( serverURL + "/getsimilarvideos?num_neighbors="+ofToString(num_videos)+"&duration="+ofToString(duration)+"&id="+ofToString(vidSeqEndId))) {
+    cout << "---------\nGet similar videos" << endl;
+    string request = serverURL + "/getsimilarvideos?num_neighbors="+ofToString(num_videos)+"&duration="+ofToString(duration)+"&id="+ofToString(vidSeqEndId);
+    cout << request + "\n" << endl;
+    if (response.open(request)) {
         vidSeqEndId =  parseResponse(response, videoFiles, timeStartEnd);
     }
 }

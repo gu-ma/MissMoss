@@ -41,6 +41,7 @@ public:
     int vidSeqStartId, vidSeqEndId;
     int vidSeqPathNumVideos, vidSeqPathVideosDuration;
     int vidSeqSimVidNumVideos, vidSeqSimVidVideosDuration;
+    float vidSeqSimVidfadeDuration, vidSeqPathfadeDuration;
     string vidSeqOrder;
     vector<string> videoFiles;
     vector<ofVec2f> timeStartEnd;
