@@ -25,7 +25,7 @@ void ofApp::setup(){
     vidSeqPathVideosDuration = 5;
     vidSeqPathfadeDuration = 1;
     vidSeqSimVidNumVideos = 2;
-    vidSeqSimVidVideosDuration = 10;
+    vidSeqSimVidVideosDuration = 5;
     vidSeqSimVidfadeDuration = 3;
     serverURL = "http://127.0.0.1:5002";
     // Start idle Mode
@@ -47,7 +47,7 @@ void ofApp::setup(){
     startTime = 0;
     endTime = 0;
     totalTime = 0;
-    tripDuration = 15000; // in ms
+    tripDuration = 20000; // in ms
     descentDuration = 5000; // in ms
     morphAmount = 0;
     lastmorphAmount = 0;
@@ -61,7 +61,7 @@ void ofApp::update(){
     t = (t < inertia) ? t+1 : 0;
     smoothedVariation[t] = esp.data_point_var_norm_smoothed;
     float sum = accumulate(smoothedVariation.begin(), smoothedVariation.end(), 0.0);
-////    float v = sum / inertia;
+//   float v = sum / inertia;
 //    float v = ofMap(mouseX, 0, ofGetWidth(), 0, 1);
 //    if (ofGetElapsedTimeMillis() % 4 == 0) {
 //        soundOut.variation1 = ofMap(v, .95, 0, 0, 1);
@@ -80,22 +80,26 @@ void ofApp::update(){
     if (esp.predicted_label == 4) {
         if (mode != 4) {
             // Start the trip mode
-            videoSequence.init(videoFiles, timeStartEnd, vidSeqPathfadeDuration, false);
+            videoSequence.add(videoFiles, timeStartEnd, vidSeqPathfadeDuration, false, true);
             getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration);
+            // Save video for reload later
+            getSimilarVideos(vidSeqEndId, videoFilesSaved, timeStartEndSaved, vidSeqSimVidNumVideos, vidSeqSimVidVideosDuration);
+            // Time stuff
             startTime = ofGetElapsedTimeMillis();
             soundOut.startMorph();
             mode = 4;
         }
-        // Counter
+        
+        // Counter + Morph
         elapsedTime = ofGetElapsedTimeMillis() - startTime;
         endTime = ofGetElapsedTimeMillis();
         totalTime = elapsedTime;
         lastmorphAmount = morphAmount;
-        // Audio
         morphAmount = ofMap(elapsedTime, 0, tripDuration, 0, 1);
+        
         // Keep adding videos to the path
         if ( videoSequence.isFinished() ) {
-            videoSequence.add(videoFiles, timeStartEnd, vidSeqPathfadeDuration, false);
+            videoSequence.add(videoFiles, timeStartEnd, vidSeqPathfadeDuration, false, false);
             getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration);
         }
         
@@ -106,8 +110,7 @@ void ofApp::update(){
             // Start the idle mode
             vidSeqOrder = "StartToEnd";
             vidSeqEndId = -1;
-            getSimilarVideos(vidSeqEndId, videoFiles, timeStartEnd, vidSeqSimVidNumVideos, vidSeqSimVidVideosDuration);
-            videoSequence.init(videoFiles, timeStartEnd, vidSeqSimVidfadeDuration, true);
+            videoSequence.init(videoFilesSaved, timeStartEndSaved, vidSeqSimVidfadeDuration, true);
             getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration);
             mode = 1;
         }
@@ -129,7 +132,7 @@ void ofApp::draw(){
 
     ofBackground(0);
     videoSequence.draw(0, 0, ofGetWidth(), ofGetHeight());
-    esp.draw();
+    esp.draw(morphAmount);
 
 }
 

@@ -152,12 +152,16 @@ public:
     }
     
     //--------------------------------------------------------------
-    void draw(){
+    void draw(float amount){
         
+        float a = ofMap(amount, 0, 1, 255, -255*16);
+        ofSetColor(255,255,255,ofClamp(a, 0, 255));
         string buf;
         buf = "listening for osc messages on port " + ofToString(OSC_PORT);
         ofDrawBitmapString(buf, 60, 70);
         
+        a = ofMap(amount, 0, 1, 255, -255*8);
+        ofSetColor(255,255,255,ofClamp(a, 0, 255));
         buf = "data point average: " + ofToString(data_point_avg);
         buf += "\ndata point Variation: " + ofToString(data_point_var);
         buf += "\ndata point Variation norm: " + ofToString(data_point_var_norm);
@@ -167,7 +171,9 @@ public:
         buf += "\nPredicted Label: " + ofToString(predicted_label);
         buf += "\n\nphaseAdderTarget: " + ofToString(phaseAdderTarget);
         ofDrawBitmapString(buf, 60, 90);
-        
+
+        a = ofMap(amount, 0, 1, 255, -255*4);
+        ofSetColor(255,255,255,ofClamp(a, 0, 255));
         string txt;
         if ( predicted_label == 1 ) txt = "No hands";
         else if ( predicted_label == 2 ) txt = "Hovering";
@@ -176,6 +182,8 @@ public:
         font.drawString(txt, 50, 420);
         
         data_point_line.getSmoothed(5).draw();
+        ofSetColor(255,255,255,255);
+
     }
     
     //--------------------------------------------------------------

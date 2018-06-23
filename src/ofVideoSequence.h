@@ -71,12 +71,12 @@ public:
         bool isPlaying() { return this->videoPlayer.isPlaying(); }
         bool isFinished() { return this->finished; }
         bool fadeStarted() { return this->fade; }
-        
+
     };
     
     vector<string> videoFiles;
     vector<ofVec2f> timeStartEnd;
-    size_t index, numScenes, activeLoop;
+    int index, numScenes, activeLoop;
     float fadeDuration;
     VideoLoop vidLoop1, vidLoop2;
     bool finished, loop;
@@ -97,7 +97,11 @@ public:
         activeLoop = 1;
     }
     
-    void add(vector<string> & videoFiles, vector<ofVec2f> & timeStartEnd, float fadeDuration, bool loop){
+    void add(vector<string> & videoFiles, vector<ofVec2f> & timeStartEnd, float fadeDuration, bool loop, bool continuous){
+        if (continuous) {
+            this->videoFiles.erase (this->videoFiles.begin()+index, this->videoFiles.end());
+            this->timeStartEnd.erase (this->timeStartEnd.begin()+index, this->timeStartEnd.end());
+        }
         this->videoFiles.insert(this->videoFiles.end(), videoFiles.begin(), videoFiles.end());
         this->timeStartEnd.insert(this->timeStartEnd.end(), timeStartEnd.begin(), timeStartEnd.end());
         this->numScenes = this->videoFiles.size();

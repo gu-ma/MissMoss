@@ -43,8 +43,8 @@ public:
     int vidSeqSimVidNumVideos, vidSeqSimVidVideosDuration;
     float vidSeqSimVidfadeDuration, vidSeqPathfadeDuration;
     string vidSeqOrder;
-    vector<string> videoFiles;
-    vector<ofVec2f> timeStartEnd;
+    vector<string> videoFiles, videoFilesSaved;
+    vector<ofVec2f> timeStartEnd, timeStartEndSaved;
     string serverURL;
     void getVideosPath(string & vidSeqOrder, int & startId, vector<string> & videoFiles, vector<ofVec2f> & timeStartEnd, int num_videos, int duration);
     void getSimilarVideos(int & vidSeqEndId, vector<string> & videoFiles, vector<ofVec2f> & timeStartEnd, int num_videos, int duration);
