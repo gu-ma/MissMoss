@@ -44,6 +44,13 @@ void ofApp::setup(){
     // 4 = "Touching";
     mode = 1;
     elapsedTime = 0;
+    startTime = 0;
+    endTime = 0;
+    totalTime = 0;
+    tripDuration = 15000; // in ms
+    descentDuration = 5000; // in ms
+    morphAmount = 0;
+    lastmorphAmount = 0;
 
 }
 
@@ -54,14 +61,16 @@ void ofApp::update(){
     t = (t < inertia) ? t+1 : 0;
     smoothedVariation[t] = esp.data_point_var_norm_smoothed;
     float sum = accumulate(smoothedVariation.begin(), smoothedVariation.end(), 0.0);
-//    float v = sum / inertia;
-    float v = ofMap(mouseX, 0, ofGetWidth(), 0, 1);
-    if (ofGetElapsedTimeMillis() % 4 == 0) {
-        soundOut.variation1 = ofMap(v, .95, 0, 0, 1);
-    }
+////    float v = sum / inertia;
+//    float v = ofMap(mouseX, 0, ofGetWidth(), 0, 1);
+//    if (ofGetElapsedTimeMillis() % 4 == 0) {
+//        soundOut.variation1 = ofMap(v, .95, 0, 0, 1);
+//    }
     
     // ESP
     esp.update();
+    
+    // SOUND
     soundOut.update();
 
     // Video Sequence
@@ -73,14 +82,26 @@ void ofApp::update(){
             // Start the trip mode
             videoSequence.init(videoFiles, timeStartEnd, vidSeqPathfadeDuration, false);
             getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration);
+            startTime = ofGetElapsedTimeMillis();
+            soundOut.startMorph();
             mode = 4;
         }
+        // Counter
+        elapsedTime = ofGetElapsedTimeMillis() - startTime;
+        endTime = ofGetElapsedTimeMillis();
+        totalTime = elapsedTime;
+        lastmorphAmount = morphAmount;
+        // Audio
+        morphAmount = ofMap(elapsedTime, 0, tripDuration, 0, 1);
+        // Keep adding videos to the path
         if ( videoSequence.isFinished() ) {
             videoSequence.add(videoFiles, timeStartEnd, vidSeqPathfadeDuration, false);
             getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration);
         }
+        
     // Any other cases
     } else {
+        
         if (mode != 1) {
             // Start the idle mode
             vidSeqOrder = "StartToEnd";
@@ -90,7 +111,16 @@ void ofApp::update(){
             getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration);
             mode = 1;
         }
+        
+        if (elapsedTime <= totalTime - descentDuration) {
+            soundOut.stopMorph();
+        } else {
+            elapsedTime = totalTime - (ofGetElapsedTimeMillis() - endTime);
+            morphAmount = ofMap(elapsedTime, totalTime, totalTime - descentDuration, lastmorphAmount, 0);
+        }
+
     }
+        soundOut.morphAmount(morphAmount);
 
 }
 

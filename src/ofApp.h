@@ -34,7 +34,7 @@ public:
     
     // SOUND
     ofSoundOut soundOut;
-    
+
     // VIDEO SEQUENCE
     ofxJSONElement response;
     ofVideoSequence videoSequence;
@@ -52,6 +52,8 @@ public:
     
     // GENERAL
     int mode;
-    int elapsedTime;
+    int startTime, endTime, totalTime, elapsedTime;
+    int tripDuration, descentDuration;
+    float morphAmount, lastmorphAmount;
 
 };
