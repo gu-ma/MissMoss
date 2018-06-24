@@ -48,7 +48,7 @@ void ofApp::setup(){
     endTime = 0;
     totalTime = 0;
     tripDuration = 20000; // in ms
-    descentDuration = 5000; // in ms
+    descentDuration = 1000; // in ms
     morphAmount = 0;
     lastmorphAmount = 0;
 
@@ -123,7 +123,7 @@ void ofApp::update(){
         }
 
     }
-        soundOut.morphAmount(morphAmount);
+    soundOut.morphAmount(morphAmount);
 
 }
 
@@ -156,8 +156,12 @@ void ofApp::keyPressed(int key){
     
     // SoundOut
     if(key == 'l') soundOut.lowpass2.showUI();
-    if(key == 'd') soundOut.distortion.showUI();
-    
+    if(key == 'd') {
+        soundOut.distortion1.showUI();
+        soundOut.distortion2.showUI();
+    }
+    if(key == 'c') soundOut.lowpass2.showUI();
+
     // VideoSequence
     if ( key == ' ' ) {
         vidSeqEndId = -1;
