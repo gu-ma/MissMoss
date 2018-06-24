@@ -138,7 +138,7 @@ public:
                     }
                 }
             }
-            cout << data_point_max_smoothed << endl;
+//            cout << data_point_max_smoothed << endl;
 
         }
         
