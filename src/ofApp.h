@@ -38,19 +38,21 @@ public:
     // VIDEO SEQUENCE
     ofxJSONElement response;
     ofVideoSequence videoSequence;
-    int vidSeqStartId, vidSeqEndId;
+    int vidSeqEndId, vidSeqEndIdSaved;
     int vidSeqPathNumVideos, vidSeqPathVideosDuration;
     int vidSeqSimVidNumVideos, vidSeqSimVidVideosDuration;
     float vidSeqSimVidfadeDuration, vidSeqPathfadeDuration;
     string vidSeqOrder;
     vector<string> videoFiles, videoFilesSaved;
     vector<ofVec2f> timeStartEnd, timeStartEndSaved;
+    vector<string> videoPoems, videoPoemsSaved;
+    vector<string> videoDesc, videoDescSaved;
     string serverURL;
     bool loading;
     void urlResponse(ofHttpResponse & response);
-    void getVideosPath(string & vidSeqOrder, int & startId, vector<string> & videoFiles, vector<ofVec2f> & timeStartEnd, int num_videos, int duration, string mode);
-    void getSimilarVideos(int & vidSeqEndId, vector<string> & videoFiles, vector<ofVec2f> & timeStartEnd, int num_videos, int duration, string mode);
-    int parseResponse(ofxJSONElement & response, vector<string> & videoFiles, vector<ofVec2f> & timeStartEnd);
+    void getVideosPath(string & vidSeqOrder, int & startId, vector<string> & videoFiles, vector<string> & videoPoems, vector<string> & videoDesc, vector<ofVec2f> & timeStartEnd, int num_videos, int duration, string mode);
+    void getSimilarVideos(int & vidSeqEndId, vector<string> & videoFiles, vector<string> & videoPoems, vector<string> & videoDesc, vector<ofVec2f> & timeStartEnd, int num_videos, int duration, string mode);
+    int parseResponse(ofxJSONElement & response, vector<string> & videoFiles, vector<string> & videoPoems, vector<string> & videoDesc, vector<ofVec2f> & timeStartEnd);
     
     // GENERAL
     int mode;

@@ -38,7 +38,7 @@ public:
         
         // Mixer 1
         mixer1.setInputBusCount(3);
-        outputMain.setDevice(47);
+//        outputMain.setDevice(47);
 //        source1.connectTo(distortion).connectTo(tap1).connectTo(mixer1, 0);
 //        source2.connectTo(delay).connectTo(tap2).connectTo(mixer1, 1);
 //        source3.connectTo(lowpass1).connectTo(tap3).connectTo(mixer1, 2);
@@ -67,7 +67,7 @@ public:
         source4.loop();
         
         // Misc
-        stopMorph();
+        startMorph();
         morphAmount(0);
 
     }

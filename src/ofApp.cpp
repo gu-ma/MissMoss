@@ -33,11 +33,13 @@ void ofApp::setup(){
     // Start idle Mode
     vidSeqOrder = "StartToEnd";
     vidSeqEndId = -1;
+    vidSeqEndIdSaved = -1;
     // Load the first round of videos
-    getSimilarVideos(vidSeqEndId, videoFiles, timeStartEnd, vidSeqSimVidNumVideos, vidSeqSimVidVideosDuration, "Init");
-//    videoSequence.init(videoFiles, timeStartEnd, vidSeqSimVidfadeDuration, true);
+    getSimilarVideos(vidSeqEndId, videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqSimVidNumVideos, vidSeqSimVidVideosDuration, "Init");
     // Prepare the path for the idle mode
-    getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration, "None");
+    getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration, "None");
+    // Save video for reload later
+    getSimilarVideos(vidSeqEndIdSaved, videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqSimVidNumVideos, vidSeqSimVidVideosDuration, "Save");
     
     // Misc
     // 1 = "No hands"
@@ -49,8 +51,8 @@ void ofApp::setup(){
     startTime = 0;
     endTime = 0;
     totalTime = 0;
-    tripDuration = 20000; // in ms
-    descentDuration = 1000; // in ms
+    tripDuration = 8000; // in ms
+    descentDuration = 4000; // in ms
     morphAmount = 0;
     lastmorphAmount = 0;
 
@@ -76,33 +78,36 @@ void ofApp::update(){
     soundOut.update();
 
     // Video Sequence
-    if (!loading) videoSequence.update();
+    videoSequence.update();
 
     // If 'Touching'
     if (esp.predicted_label == 4) {
         if (mode != 4) {
             // Start the trip mode
-            videoSequence.add(videoFiles, timeStartEnd, vidSeqPathfadeDuration, false, true);
-            getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration, "None");
+            videoSequence.add(videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathfadeDuration, false, true);
+            getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration, "None");
             // Save video for reload later
-            getSimilarVideos(vidSeqEndId, videoFilesSaved, timeStartEndSaved, vidSeqSimVidNumVideos, vidSeqSimVidVideosDuration, "Save");
+            getSimilarVideos(vidSeqEndIdSaved, videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqSimVidNumVideos, vidSeqSimVidVideosDuration, "Save");
             // Time stuff
+            totalTime = elapsedTime;
             startTime = ofGetElapsedTimeMillis();
+            lastmorphAmount = morphAmount;
             soundOut.startMorph();
             mode = 4;
         }
         
-        // Counter + Morph
-        elapsedTime = ofGetElapsedTimeMillis() - startTime;
-        endTime = ofGetElapsedTimeMillis();
-        totalTime = elapsedTime;
-        lastmorphAmount = morphAmount;
-        morphAmount = ofMap(elapsedTime, 0, tripDuration, 0, 1);
-        
+        // Morph
+        if (elapsedTime > tripDuration) {
+            soundOut.stopMorph();
+        } else {
+            elapsedTime = totalTime + (ofGetElapsedTimeMillis() - startTime);
+            morphAmount = ofMap(elapsedTime, totalTime, tripDuration, lastmorphAmount, 1);
+        }
+
         // Keep adding videos to the path
         if ( videoSequence.isFinished() ) {
-            videoSequence.add(videoFiles, timeStartEnd, vidSeqPathfadeDuration, false, false);
-            getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration, "None");
+            videoSequence.add(videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathfadeDuration, false, false);
+            getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration, "None");
         }
         
     // Any other cases
@@ -112,19 +117,28 @@ void ofApp::update(){
             // Start the idle mode
             vidSeqOrder = "StartToEnd";
             vidSeqEndId = -1;
-            videoSequence.init(videoFilesSaved, timeStartEndSaved, vidSeqSimVidfadeDuration, true);
-            getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration, "None");
+            videoSequence.init(videoFilesSaved, videoPoemsSaved, videoDescSaved, timeStartEndSaved, vidSeqSimVidfadeDuration, true);
+            getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration, "None");
+            // Time
+            totalTime = elapsedTime;
+            startTime = ofGetElapsedTimeMillis();
+            lastmorphAmount = morphAmount;
+            soundOut.startMorph();
             mode = 1;
         }
         
-        if (elapsedTime <= totalTime - descentDuration) {
+        // Morph
+        if (elapsedTime <= max(0, totalTime-descentDuration)) {
             soundOut.stopMorph();
+            elapsedTime = 0;
         } else {
-            elapsedTime = totalTime - (ofGetElapsedTimeMillis() - endTime);
-            morphAmount = ofMap(elapsedTime, totalTime, totalTime - descentDuration, lastmorphAmount, 0);
+            elapsedTime = totalTime - (ofGetElapsedTimeMillis() - startTime);
+            morphAmount = ofMap(elapsedTime, totalTime, max(0, totalTime-descentDuration), lastmorphAmount, 0);
         }
 
     }
+    cout << elapsedTime << endl;
+    cout << morphAmount << endl;
     soundOut.morphAmount(morphAmount);
 
 }
@@ -168,14 +182,14 @@ void ofApp::keyPressed(int key){
     if ( key == ' ' ) {
         vidSeqEndId = -1;
         vidSeqOrder = "StartToEnd";
-        getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration, "Init");
-        getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration, "None");
+        getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration, "Init");
+        getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration, "None");
     }
 
 }
 
 //--------------------------------------------------------------
-void ofApp::getVideosPath(string & vidSeqOrder, int & vidSeqEndId, vector<string> & videoFiles, vector<ofVec2f> & timeStartEnd, int num_videos, int duration, string mode){
+void ofApp::getVideosPath(string & vidSeqOrder, int & vidSeqEndId, vector<string> & videoFiles, vector<string> & videoPoems, vector<string> & videoDesc, vector<ofVec2f> & timeStartEnd, int num_videos, int duration, string mode){
     cout << "\n---------\nGet video path" << endl;
     string request = serverURL + "/getpath?num_neighbors="+ofToString(num_videos)+"&duration="+ofToString(duration)+"&order="+vidSeqOrder+"&start_id="+ofToString(vidSeqEndId);
     cout << request + "\n"<< endl;
@@ -183,13 +197,13 @@ void ofApp::getVideosPath(string & vidSeqOrder, int & vidSeqEndId, vector<string
     // mode = Add, Init, Save, None
     int id = ofLoadURLAsync(request, "getVideosPath"+mode);
 //    if (response.open(request)) {
-//        vidSeqEndId = parseResponse(response, videoFiles, timeStartEnd);
+//        vidSeqEndId = parseResponse(response, videoFiles, videoPoems, videoDesc, timeStartEnd);
 //        vidSeqOrder = ( vidSeqOrder == "StartToEnd" ) ? "EndToStart" : "StartToEnd";
 //    }
 }
 
 //--------------------------------------------------------------
-void ofApp::getSimilarVideos(int & vidSeqEndId, vector<string> & videoFiles, vector<ofVec2f> & timeStartEnd, int num_videos, int duration, string mode){
+void ofApp::getSimilarVideos(int & vidSeqEndId, vector<string> & videoFiles, vector<string> & videoPoems, vector<string> & videoDesc, vector<ofVec2f> & timeStartEnd, int num_videos, int duration, string mode){
     cout << "---------\nGet similar videos" << endl;
     string request = serverURL + "/getsimilarvideos?num_neighbors="+ofToString(num_videos)+"&duration="+ofToString(duration)+"&id="+ofToString(vidSeqEndId);
     cout << request + "\n" << endl;
@@ -197,20 +211,26 @@ void ofApp::getSimilarVideos(int & vidSeqEndId, vector<string> & videoFiles, vec
     // mode = Add, Init, Save, None
     int id = ofLoadURLAsync(request, "getSimilarVideos"+mode);
 //    if (response.open(request)) {
-//        vidSeqEndId =  parseResponse(response, videoFiles, timeStartEnd);
+//        vidSeqEndId =  parseResponse(response, videoFiles, videoPoems, videoDesc, timeStartEnd);
 //    }
 }
 
 //--------------------------------------------------------------
-int ofApp::parseResponse(ofxJSONElement & response, vector<string> & videoFiles, vector<ofVec2f> & timeStartEnd){
+int ofApp::parseResponse(ofxJSONElement & response, vector<string> & videoFiles, vector<string> & videoPoems, vector<string> & videoDesc, vector<ofVec2f> & timeStartEnd){
     int numScenes = response["scenes"].size();
     videoFiles.clear();
+    videoPoems.clear();
+    videoDesc.clear();
     timeStartEnd.clear();
     for (Json::ArrayIndex i = 0; i < numScenes; ++i) {
         string file = response["scenes"][i]["file"].asString();
+        string poem = response["scenes"][i]["poem"].asString();
+        string desc = response["scenes"][i]["description"].asString();
         float start_time = response["scenes"][i]["start_time"].asFloat();
         float end_time = response["scenes"][i]["end_time"].asFloat();
         videoFiles.push_back(file);
+        videoPoems.push_back(poem);
+        videoDesc.push_back(desc);
         timeStartEnd.push_back(ofVec2f(start_time, end_time));
 //        cout << response["scenes"][i] << endl;
     }
@@ -226,29 +246,29 @@ void ofApp::urlResponse(ofHttpResponse & response) {
         cout << response.request.name << endl;
         //
         if (response.request.name == "getSimilarVideosAdd")  {
-            vidSeqEndId =  parseResponse(r, videoFiles, timeStartEnd);
-            videoSequence.add(videoFiles, timeStartEnd, vidSeqSimVidfadeDuration, false, true);
+            vidSeqEndId =  parseResponse(r, videoFiles, videoPoems, videoDesc, timeStartEnd);
+            videoSequence.add(videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqSimVidfadeDuration, false, true);
         } else if (response.request.name == "getSimilarVideosInit")  {
-            vidSeqEndId =  parseResponse(r, videoFiles, timeStartEnd);
-            videoSequence.init(videoFiles, timeStartEnd, vidSeqSimVidfadeDuration, true);
+            vidSeqEndId =  parseResponse(r, videoFiles, videoPoems, videoDesc, timeStartEnd);
+            videoSequence.init(videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqSimVidfadeDuration, true);
         } else if (response.request.name == "getSimilarVideosSave")  {
-            vidSeqEndId =  parseResponse(r, videoFilesSaved, timeStartEndSaved);
+            vidSeqEndId =  parseResponse(r, videoFilesSaved, videoPoemsSaved, videoDescSaved, timeStartEndSaved);
         } else if (response.request.name == "getSimilarVideosNone")  {
-            vidSeqEndId =  parseResponse(r, videoFiles, timeStartEnd);
+            vidSeqEndId =  parseResponse(r, videoFiles, videoPoems, videoDesc, timeStartEnd);
         //
         } else if (response.request.name == "getVideosPathAdd")  {
-            vidSeqEndId =  parseResponse(r, videoFiles, timeStartEnd);
-            videoSequence.add(videoFiles, timeStartEnd, vidSeqSimVidfadeDuration, false, true);
+            vidSeqEndId =  parseResponse(r, videoFiles, videoPoems, videoDesc, timeStartEnd);
+            videoSequence.add(videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqSimVidfadeDuration, false, true);
             vidSeqOrder = ( vidSeqOrder == "StartToEnd" ) ? "EndToStart" : "StartToEnd";
         } else if (response.request.name == "getVideosPathInit")  {
-            vidSeqEndId =  parseResponse(r, videoFilesSaved, timeStartEndSaved);
-            videoSequence.init(videoFiles, timeStartEnd, vidSeqSimVidfadeDuration, true);
+            vidSeqEndId =  parseResponse(r, videoFiles, videoPoems, videoDesc, timeStartEnd);
+            videoSequence.init(videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqSimVidfadeDuration, true);
             vidSeqOrder = ( vidSeqOrder == "StartToEnd" ) ? "EndToStart" : "StartToEnd";
         } else if (response.request.name == "getVideosPathSave")  {
-            vidSeqEndId =  parseResponse(r, videoFilesSaved, timeStartEndSaved);
+            vidSeqEndId =  parseResponse(r, videoFilesSaved, videoPoemsSaved, videoDescSaved, timeStartEndSaved);
             vidSeqOrder = ( vidSeqOrder == "StartToEnd" ) ? "EndToStart" : "StartToEnd";
         } else if (response.request.name == "getVideosPathNone")  {
-            vidSeqEndId =  parseResponse(r, videoFiles, timeStartEnd);
+            vidSeqEndId =  parseResponse(r, videoFiles, videoPoems, videoDesc, timeStartEnd);
             vidSeqOrder = ( vidSeqOrder == "StartToEnd" ) ? "EndToStart" : "StartToEnd";
         }
     } else {
