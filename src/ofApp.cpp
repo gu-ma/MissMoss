@@ -51,8 +51,8 @@ void ofApp::setup(){
     startTime = 0;
     endTime = 0;
     totalTime = 0;
-    tripDuration = 8000; // in ms
-    descentDuration = 4000; // in ms
+    tripDuration = 30000; // in ms
+    descentDuration = 5000; // in ms
     morphAmount = 0;
     lastmorphAmount = 0;
 
@@ -101,7 +101,7 @@ void ofApp::update(){
             soundOut.stopMorph();
         } else {
             elapsedTime = totalTime + (ofGetElapsedTimeMillis() - startTime);
-            morphAmount = ofMap(elapsedTime, totalTime, tripDuration, lastmorphAmount, 1);
+            morphAmount = ofMap(elapsedTime, totalTime, tripDuration, lastmorphAmount, 2);
         }
 
         // Keep adding videos to the path
@@ -137,9 +137,15 @@ void ofApp::update(){
         }
 
     }
-    cout << elapsedTime << endl;
-    cout << morphAmount << endl;
-    soundOut.morphAmount(morphAmount);
+    
+    // morphAmount 0 --> 2 (clamp it)
+    float m1 = ofClamp(morphAmount, 0, 1);
+    float m2 = ofMap(morphAmount, 0, 2, 0, 1);
+    m2 = ofClamp(m2, 0, 1);
+    m1 = easing.easeInQuad(m1);
+    m2 = easing.easeInQuad(m2);
+    soundOut.morph(m1, m2);
+    cout << ofToString(morphAmount) + "\t" + ofToString(m1) + "\t" + ofToString(m2) << endl;
 
 }
 

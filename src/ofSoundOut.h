@@ -19,8 +19,8 @@ public:
     
     ofxAudioUnitTap tap1, tap2, tap3, tap4;
     
-    float amount;
-    bool morph;
+    float morphAmount1, morphAmount2;
+    bool doMorph;
     
     void setup() {
         
@@ -68,17 +68,20 @@ public:
         
         // Misc
         startMorph();
-        morphAmount(0);
+        morph(0, 0);
 
     }
     
     void update() {
-        if (morph) morphSettings(amount);
+        if (doMorph) morphSettings(morphAmount1, morphAmount2);
     }
     
-    void startMorph() { morph = true; }
-    void stopMorph() { morph = false; }
-    void morphAmount(float amount) { this->amount = amount; }
+    void startMorph() { doMorph = true; }
+    void stopMorph() { doMorph = false; }
+    void morph(float morphAmount1, float morphAmount2) {
+        this->morphAmount1 = morphAmount1;
+        this->morphAmount2 = morphAmount2;
+    }
     
     void initSettings() {
         // Volume
@@ -127,41 +130,42 @@ public:
         AudioUnitSetParameter(lowpass2, kLowPassParam_CutoffFrequency, kAudioUnitScope_Global, 0, 70, 0);
     }
     
-    void morphSettings(float amount) {
-        amount = ofClamp(amount, 0, 1);
-        float amount1 = ofMap(amount, 0, 1, 0, 3);
-        amount1 = ofClamp(amount1, 0, 1);
+    void morphSettings(float m1, float m2) {
+        // 2x faster
+        float m3 = ofMap(m1, 0, 1, 0, 2);
+        m3 = ofClamp(m3, 0, 1);
+        //
         // Volume
-        mixer1.setInputVolume(amount, 0);
-        mixer1.setInputVolume(amount, 1);
-        mixer1.setInputVolume(1-amount, 2);
-        mixer2.setInputVolume(amount, 0);
-        // ------- DISTO 01
+        mixer1.setInputVolume(m3, 0);
+        mixer1.setInputVolume(m3, 1);
+        mixer1.setInputVolume(1-m3, 2);
+        mixer2.setInputVolume(m3, 0);
+        // ------- DISTO 01 (BASS)
         // DELAY
-//        AudioUnitSetParameter(distortion1, kDistortionParam_Delay, kAudioUnitScope_Global, 0, ofMap(amount, 0, 1, 60, 80), 0);
-        AudioUnitSetParameter(distortion1, kDistortionParam_Decay, kAudioUnitScope_Global, 0, ofMap(amount/2, 0, 1, 20, 40), 0);
-        AudioUnitSetParameter(distortion1, kDistortionParam_DelayMix, kAudioUnitScope_Global, 0, ofMap(amount, 0, 1, 0, 20), 0);
+//        AudioUnitSetParameter(distortion1, kDistortionParam_Delay, kAudioUnitScope_Global, 0, ofMap(morphAmount, 0, 1, 60, 80), 0);
+        AudioUnitSetParameter(distortion1, kDistortionParam_Decay, kAudioUnitScope_Global, 0, ofMap(m2, 0, 1, 20, 40), 0);
+        AudioUnitSetParameter(distortion1, kDistortionParam_DelayMix, kAudioUnitScope_Global, 0, ofMap(m1, 0, 1, 0, 20), 0);
         // DECIMATION
-        AudioUnitSetParameter(distortion1, kDistortionParam_Decimation, kAudioUnitScope_Global, 0, ofMap(amount/2, 0, 1, 2.5, 5), 0);
-        AudioUnitSetParameter(distortion1, kDistortionParam_Rounding, kAudioUnitScope_Global, 0, ofMap(amount, 0, 1, 80, 60), 0);
-        AudioUnitSetParameter(distortion1, kDistortionParam_DecimationMix, kAudioUnitScope_Global, 0, ofMap(amount, 0, 1, 0, 20), 0);
+        AudioUnitSetParameter(distortion1, kDistortionParam_Decimation, kAudioUnitScope_Global, 0, ofMap(m2, 0, 1, 2.5, 5), 0);
+        AudioUnitSetParameter(distortion1, kDistortionParam_Rounding, kAudioUnitScope_Global, 0, ofMap(m2, 0, 1, 80, 60), 0);
+        AudioUnitSetParameter(distortion1, kDistortionParam_DecimationMix, kAudioUnitScope_Global, 0, ofMap(m2, 0, 1, 0, 20), 0);
         // RINGMOD
-        AudioUnitSetParameter(distortion1, kDistortionParam_RingModMix, kAudioUnitScope_Global, 0, ofMap(amount, 0, 1, 0, 20), 0);
+        AudioUnitSetParameter(distortion1, kDistortionParam_RingModMix, kAudioUnitScope_Global, 0, ofMap(m2, 0, 1, 0, 20), 0);
         // GENERAL
-        AudioUnitSetParameter(distortion1, kDistortionParam_FinalMix, kAudioUnitScope_Global, 0, ofMap(amount, 0, 1, 0, 20), 0);
-        // ------- DISTO 02
+        AudioUnitSetParameter(distortion1, kDistortionParam_FinalMix, kAudioUnitScope_Global, 0, ofMap(m2, 0, 1, 0, 20), 0);
+        // ------- DISTO 02 (KICK)
         // DELAY
-        AudioUnitSetParameter(distortion2, kDistortionParam_Decay, kAudioUnitScope_Global, 0, ofMap(amount, 0, 1, 10, 20), 0);
-        AudioUnitSetParameter(distortion2, kDistortionParam_DelayMix, kAudioUnitScope_Global, 0, ofMap(amount, 0, 1, 0, 20), 0);
+        AudioUnitSetParameter(distortion2, kDistortionParam_Decay, kAudioUnitScope_Global, 0, ofMap(m2, 0, 1, 10, 20), 0);
+        AudioUnitSetParameter(distortion2, kDistortionParam_DelayMix, kAudioUnitScope_Global, 0, ofMap(m2, 0, 1, 0, 20), 0);
         // DECIMATION
-        AudioUnitSetParameter(distortion2, kDistortionParam_DecimationMix, kAudioUnitScope_Global, 0, ofMap(amount, 0, 1, 0, 10), 0);
+        AudioUnitSetParameter(distortion2, kDistortionParam_DecimationMix, kAudioUnitScope_Global, 0, ofMap(m2, 0, 1, 0, 10), 0);
         // RINGMOD
-        AudioUnitSetParameter(distortion2, kDistortionParam_RingModMix, kAudioUnitScope_Global, 0, ofMap(amount, 0, 1, 0, 20), 0);
+        AudioUnitSetParameter(distortion2, kDistortionParam_RingModMix, kAudioUnitScope_Global, 0, ofMap(m2, 0, 1, 0, 20), 0);
         // GENERAL
-        AudioUnitSetParameter(distortion2, kDistortionParam_FinalMix, kAudioUnitScope_Global, 0, ofMap(amount, 0, 1, 0, 20), 0);
-        // ------- LOWPASS 01+02
-        AudioUnitSetParameter(lowpass1, kLowPassParam_Resonance, kAudioUnitScope_Global, 0, ofMap(amount, 0, 1, 0, 7), 0);
-        AudioUnitSetParameter(lowpass2, kLowPassParam_Resonance, kAudioUnitScope_Global, 0, ofMap(amount, 0, 1, 0, 7), 0);
+        AudioUnitSetParameter(distortion2, kDistortionParam_FinalMix, kAudioUnitScope_Global, 0, ofMap(m2, 0, 1, 0, 20), 0);
+        // ------- LOWPASS 01 (BASS) + 02 (BASS SOUNDWAVER)
+        AudioUnitSetParameter(lowpass1, kLowPassParam_Resonance, kAudioUnitScope_Global, 0, ofMap(m2, 0, 1, 0, 7), 0);
+        AudioUnitSetParameter(lowpass2, kLowPassParam_Resonance, kAudioUnitScope_Global, 0, ofMap(m2, 0, 1, 0, 7), 0);
     }
     
 };

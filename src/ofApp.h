@@ -6,6 +6,7 @@
 #include "ofEsp.h"
 #include "ofSoundOut.h"
 #include "ofVideoSequence.h"
+#include "easing.h"
 
 
 class ofApp : public ofBaseApp{
@@ -59,5 +60,6 @@ public:
     int startTime, endTime, totalTime, elapsedTime;
     int tripDuration, descentDuration;
     float morphAmount, lastmorphAmount;
+    Easing easing;
 
 };
