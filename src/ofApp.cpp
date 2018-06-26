@@ -90,13 +90,13 @@ void ofApp::update(){
     videoSequence.update();
 
     // 'Touching'
-    if (esp.predicted_label == 2) {
-        if (videoMode != 2) {
+    if (esp.predicted_label == 4) {
+        if (videoMode != 4) {
             videoSequence.add(videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathfadeDuration, false, true);
             getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration, "None");
             // Save video for reload later
             getSimilarVideos(vidSeqEndIdSaved, videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqSimVidNumVideos, vidSeqSimVidVideosDuration, "Save");
-            videoMode = 2;
+            videoMode = 4;
         }
         // Keep adding videos to the path
         if ( videoSequence.isFinished() ) {
@@ -124,7 +124,7 @@ void ofApp::update(){
     }
     
     // SOUND
-    if (esp.predicted_label == 2) {
+    if (esp.predicted_label == 4) {
         if (elapsedTime < ascendDuration) {
             startSoundMode(4);
             updateSoundMode(4, morphAmount1, morphAmount2);
