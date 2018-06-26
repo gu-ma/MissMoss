@@ -14,15 +14,26 @@ public:
     private:
         
         float start_pct, end_pct, fade_start_pct;
-        bool finished, fade;
+        bool playing, finished, fade, showPoem;
         ofVideoPlayer videoPlayer;
         ofFbo movieFbo;
-        
+        string poem;
+        LogAudio tts;
+        ofTrueTypeFont font;
+
     public:
+
+        void init(){
+            this->tts.start();
+            font.load("Botanika-3-Lite.otf", 34);
+        }
         
-        void init(string videoFile, int timeStart, int timeEnd, bool loop, float fadeDuration){
+        void load(string videoFile, string videoPoem, int timeStart, int timeEnd, bool loop, float fadeDuration){
+            this->playing = false;
             this->finished = false;
             this->fade = false;
+            this->poem = videoPoem;
+            this->showPoem = ofRandomf()>.5;
             this->videoPlayer.load(videoFile);
             this->videoPlayer.setVolume(0);
             if (loop) this->videoPlayer.setLoopState(OF_LOOP_NORMAL);
@@ -62,13 +73,30 @@ public:
                 int a = ofMap(this->videoPlayer.getPosition(), this->fade_start_pct, this->end_pct, 300, 0);
                 ofSetColor(255,255,255,a);
                 this->movieFbo.draw(videoGrabberRect);
+                if (this->showPoem) font.drawString(this->poem, 60, ofGetHeight()-80);
                 ofSetColor(255,255,255,255);
             }
         }
         
-        void start() { this->videoPlayer.play(); }
-        void stop() { this->videoPlayer.stop(); }
-        bool isPlaying() { return this->videoPlayer.isPlaying(); }
+        void start() {
+            if ( !this->playing ) {
+                this->videoPlayer.play();
+                if ( !this->tts.startSpeaking && this->showPoem) {
+                    //                  _voice, _pbas, _pmod, _rate, _volm, _rawMsg
+                    this->tts.logAudio("Fred", "", "", "130", "0.5", this->poem);
+                }
+                this->playing = true;
+            }
+        }
+        
+        void stop() {
+            if ( this->playing ) {
+                this->videoPlayer.stop();
+                this->playing = false;
+            }
+        }
+        
+        bool isPlaying() { return this->playing; }
         bool isFinished() { return this->finished; }
         bool fadeStarted() { return this->fade; }
 
@@ -79,15 +107,17 @@ public:
     vector<string> videoDesc;
     vector<ofVec2f> timeStartEnd;
     int index, numScenes, activeLoop;
+    int indexLoopStart, indexLoopEnd;
     float fadeDuration;
     VideoLoop vidLoop1, vidLoop2;
     bool finished, loop, initialised;
     
-    void init(vector<string> & videoFiles, vector<string> & videoPoems, vector<string> & videoDesc, vector<ofVec2f> & timeStartEnd, float fadeDuration, bool loop){
-//        this->videoFiles.clear();
-//        this->videoPoems.clear();
-//        this->videoDesc.clear();
-//        this->timeStartEnd.clear();
+    void init() {
+        this->vidLoop1.init();
+        this->vidLoop2.init();
+    }
+    
+    void load(vector<string> & videoFiles, vector<string> & videoPoems, vector<string> & videoDesc, vector<ofVec2f> & timeStartEnd, float fadeDuration, bool loop){
         this->videoFiles = videoFiles;
         this->videoPoems = videoPoems;
         this->videoDesc = videoDesc;
@@ -98,6 +128,8 @@ public:
         this->finished = false;
         this->initialised = true;
         this->loop = loop;
+        this->indexLoopStart = 0;
+        this->indexLoopEnd = numScenes-1;
         loadNextVideo(this->vidLoop1, this->fadeDuration);
         loadNextVideo(this->vidLoop2, this->fadeDuration);
         this->vidLoop1.start();
@@ -105,21 +137,26 @@ public:
     }
     
     void add(vector<string> & videoFiles, vector<string> & videoPoems, vector<string> & videoDesc, vector<ofVec2f> & timeStartEnd, float fadeDuration, bool loop, bool continuous){
+        this->indexLoopStart = 0;
         if (continuous && this->initialised) {
             this->videoFiles.erase (this->videoFiles.begin()+this->index, this->videoFiles.end());
             this->videoPoems.erase (this->videoPoems.begin()+this->index, this->videoPoems.end());
             this->videoDesc.erase (this->videoDesc.begin()+this->index, this->videoDesc.end());
             this->timeStartEnd.erase (this->timeStartEnd.begin()+this->index, this->timeStartEnd.end());
+            this->indexLoopStart = this->index;
         }
         this->videoFiles.insert(this->videoFiles.end(), videoFiles.begin(), videoFiles.end());
         this->videoPoems.insert(this->videoPoems.end(), videoPoems.begin(), videoPoems.end());
         this->videoDesc.insert(this->videoDesc.end(), videoDesc.begin(), videoDesc.end());
         this->timeStartEnd.insert(this->timeStartEnd.end(), timeStartEnd.begin(), timeStartEnd.end());
         this->numScenes = this->videoFiles.size();
+        this->indexLoopEnd = numScenes-1;
         this->fadeDuration = fadeDuration;
         this->finished = false;
         this->initialised = true;
         this->loop = loop;
+        this->indexLoopEnd = numScenes-1;
+
     }
     
     void update() {
@@ -139,7 +176,7 @@ public:
         }
     }
     
-    void draw(int x, int y, int w, int h) {
+    void draw(int x, int y, int w, int h, float morphAmount1) {
         if (activeLoop == 1){
             this->vidLoop2.draw(x, y, w, h);
             this->vidLoop1.draw(x, y, w, h);
@@ -147,13 +184,18 @@ public:
             this->vidLoop1.draw(x, y, w, h);
             this->vidLoop2.draw(x, y, w, h);
         }
+        int a = ofMap(morphAmount1*8, 0, 1, 150, 0);
+        a = ofClamp(a, 0, 255);
+        ofSetColor(0,0,0,a);
+        ofDrawRectangle(0, 0, ofGetWidth(), ofGetHeight());
+        ofSetColor(255,255,255,255);
     }
     
     void loadNextVideo(VideoLoop & loop, float fadeDuration){
-        loop.init( this->videoFiles[this->index], this->timeStartEnd[this->index][0], this->timeStartEnd[this->index][1], true, fadeDuration);
+        loop.load( this->videoFiles[this->index], this->videoPoems[this->index], this->timeStartEnd[this->index][0], this->timeStartEnd[this->index][1], true, fadeDuration);
         if ( this->index == this->numScenes-1 ) this->finished = true;
         // Set into loop mode ONLY when adding files repeatly
-        if ( this->loop ) this->index = ( this->index < this->numScenes-1 ) ? this->index+1 : 0 ;
+        if ( this->loop ) this->index = ( this->index < this->indexLoopEnd ) ? this->index+1 : this->indexLoopStart ;
         else this->index++;
         cout << "Index\t\tSize\t\tFinished" << endl;
         cout << ofToString(this->index) + "\t\t\t" + ofToString(this->numScenes) + "\t\t" + ofToString(this->finished) << endl;

@@ -72,7 +72,7 @@ public:
         phase = 0;
         phaseAdder = 0.0f;
         phaseAdderTarget = 0.0f;
-        volume = 0.015f;
+        volume = 0.005f;
         bNoise = true;
         
         lAudio.assign(bufferSize, 0.0);
@@ -91,7 +91,7 @@ public:
     }
     
     //--------------------------------------------------------------
-    void update(){
+    void update(float morphAmount1){
         
         //----- OSC
         // hide old messages
@@ -147,6 +147,7 @@ public:
 //        pan = (float)ofGetMouseX() / (float)ofGetWidth();
 //        float height = (float)ofGetHeight();
 //        float heightPct = ((height-ofGetMouseY()) / height);
+        volume = (1-morphAmount1)*0.005f;
         targetFrequency = 100 + 500.0f * data_point_var_norm;
         phaseAdderTarget = (targetFrequency / (float) sampleRate) * TWO_PI;
     }
@@ -154,13 +155,13 @@ public:
     //--------------------------------------------------------------
     void draw(float amount){
         
-        float a = ofMap(amount, 0, 1, 255, -255*16);
+        float a = ofMap(amount*16, 0, 1, 255, 0);
         ofSetColor(255,255,255,ofClamp(a, 0, 255));
         string buf;
         buf = "listening for osc messages on port " + ofToString(OSC_PORT);
         ofDrawBitmapString(buf, 60, 70);
         
-        a = ofMap(amount, 0, 1, 255, -255*8);
+        a = ofMap(amount*8, 0, 1, 255, 0);
         ofSetColor(255,255,255,ofClamp(a, 0, 255));
         buf = "data point average: " + ofToString(data_point_avg);
         buf += "\ndata point Variation: " + ofToString(data_point_var);
@@ -172,7 +173,7 @@ public:
         buf += "\n\nphaseAdderTarget: " + ofToString(phaseAdderTarget);
         ofDrawBitmapString(buf, 60, 90);
 
-        a = ofMap(amount, 0, 1, 255, -255*4);
+        a = ofMap(amount*2, 0, 1, 255, 0);
         ofSetColor(255,255,255,ofClamp(a, 0, 255));
         string txt;
         if ( predicted_label == 1 ) txt = "No hands";

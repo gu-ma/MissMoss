@@ -20,8 +20,9 @@ void ofApp::setup(){
     
     // Sound
     soundOut.setup();
-    
+        
     // Video Sequence
+    videoSequence.init();
     vidSeqPathNumVideos = 10;
     vidSeqPathVideosDuration = 5;
     vidSeqPathfadeDuration = 1;
@@ -35,7 +36,7 @@ void ofApp::setup(){
     vidSeqEndId = -1;
     vidSeqEndIdSaved = -1;
     // Load the first round of videos
-    getSimilarVideos(vidSeqEndId, videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqSimVidNumVideos, vidSeqSimVidVideosDuration, "Init");
+    getSimilarVideos(vidSeqEndId, videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqSimVidNumVideos, vidSeqSimVidVideosDuration, "Load");
     // Prepare the path for the idle mode
     getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration, "None");
     // Save video for reload later
@@ -46,15 +47,23 @@ void ofApp::setup(){
     // 2 = "Hovering";
     // 3 = "Tickling";
     // 4 = "Touching";
-    mode = 1;
+    videoMode = 1;
+    soundMode = 1;
     elapsedTime = 0;
     startTime = 0;
     endTime = 0;
     totalTime = 0;
-    tripDuration = 30000; // in ms
-    descentDuration = 5000; // in ms
-    morphAmount = 0;
-    lastmorphAmount = 0;
+    ascendDuration = 25000;
+    tripDuration = 10000;
+    dropDuration = 500;
+    descentDuration = 5000;
+    morphAmount1 = 0;
+    lastmorphAmount1 = 0;
+    morphAmount2 = 0;
+    lastmorphAmount2 = 0;
+
+    // TEMP
+    esp.predicted_label = 1;
 
 }
 
@@ -66,86 +75,69 @@ void ofApp::update(){
     smoothedVariation[t] = esp.data_point_var_norm_smoothed;
     float sum = accumulate(smoothedVariation.begin(), smoothedVariation.end(), 0.0);
 //   float v = sum / inertia;
-//    float v = ofMap(mouseX, 0, ofGetWidth(), 0, 1);
-//    if (ofGetElapsedTimeMillis() % 4 == 0) {
-//        soundOut.variation1 = ofMap(v, .95, 0, 0, 1);
-//    }
+    float v = ofMap(mouseX, 0, ofGetWidth(), 0, 1);
+    if (ofGetElapsedTimeMillis() % 4 == 0) {
+        esp.data_point_var_norm = ofMap(v, .95, 0, 0, 1);
+    }
     
     // ESP
-    esp.update();
+    esp.update(morphAmount1);
     
     // SOUND
-    soundOut.update();
+    soundOut.update(morphAmount1, morphAmount2);
 
     // Video Sequence
     videoSequence.update();
 
-    // If 'Touching'
+    // 'Touching'
     if (esp.predicted_label == 4) {
-        if (mode != 4) {
-            // Start the trip mode
+        if (videoMode != 4) {
             videoSequence.add(videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathfadeDuration, false, true);
             getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration, "None");
             // Save video for reload later
             getSimilarVideos(vidSeqEndIdSaved, videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqSimVidNumVideos, vidSeqSimVidVideosDuration, "Save");
-            // Time stuff
-            totalTime = elapsedTime;
-            startTime = ofGetElapsedTimeMillis();
-            lastmorphAmount = morphAmount;
-            soundOut.startMorph();
-            mode = 4;
+            videoMode = 4;
         }
-        
-        // Morph
-        if (elapsedTime > tripDuration) {
-            soundOut.stopMorph();
-        } else {
-            elapsedTime = totalTime + (ofGetElapsedTimeMillis() - startTime);
-            morphAmount = ofMap(elapsedTime, totalTime, tripDuration, lastmorphAmount, 2);
-        }
-
         // Keep adding videos to the path
         if ( videoSequence.isFinished() ) {
             videoSequence.add(videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathfadeDuration, false, false);
             getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration, "None");
         }
         
-    // Any other cases
-    } else {
+    // 'Tickling'
+    } else if (esp.predicted_label == 3) {
         
-        if (mode != 1) {
-            // Start the idle mode
+    // 'Hovering'
+    } else if (esp.predicted_label == 2) {
+
+    // 'No Hands'
+    } else if (esp.predicted_label == 1) {
+        if (videoMode != 1) {
+            // Start the idle videoMode
             vidSeqOrder = "StartToEnd";
             vidSeqEndId = -1;
-            videoSequence.init(videoFilesSaved, videoPoemsSaved, videoDescSaved, timeStartEndSaved, vidSeqSimVidfadeDuration, true);
+//            videoSequence.load(videoFilesSaved, videoPoemsSaved, videoDescSaved, timeStartEndSaved, vidSeqSimVidfadeDuration, true);
+            videoSequence.add(videoFilesSaved, videoPoemsSaved, videoDescSaved, timeStartEndSaved, vidSeqSimVidfadeDuration, true, true);
             getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration, "None");
-            // Time
-            totalTime = elapsedTime;
-            startTime = ofGetElapsedTimeMillis();
-            lastmorphAmount = morphAmount;
-            soundOut.startMorph();
-            mode = 1;
+            videoMode = 1;
         }
-        
-        // Morph
-        if (elapsedTime <= max(0, totalTime-descentDuration)) {
-            soundOut.stopMorph();
-            elapsedTime = 0;
-        } else {
-            elapsedTime = totalTime - (ofGetElapsedTimeMillis() - startTime);
-            morphAmount = ofMap(elapsedTime, totalTime, max(0, totalTime-descentDuration), lastmorphAmount, 0);
-        }
-
     }
     
-    // morphAmount 0 --> 2 (clamp it)
-    float m1 = ofClamp(morphAmount, 0, 1);
-    float m2 = ofMap(morphAmount, 0, 2, 0, 1);
-    m2 = ofClamp(m2, 0, 1);
-    m1 = easing.easeInQuad(m1);
-    m2 = easing.easeInQuad(m2);
-    soundOut.morph(m1, m2);
-    cout << ofToString(morphAmount) + "\t" + ofToString(m1) + "\t" + ofToString(m2) << endl;
+    // SOUND
+    if (esp.predicted_label == 4) {
+        if (elapsedTime < ascendDuration) {
+            startSoundMode(4);
+            updateSoundMode(4, morphAmount1, morphAmount2);
+        } else {
+            startSoundMode(5);
+            updateSoundMode(5, morphAmount1, morphAmount2);
+        }
+    } else if (esp.predicted_label == 1) {
+        startSoundMode(1);
+        updateSoundMode(1, morphAmount1, morphAmount2);
+    }
+    
+    cout << ofToString(elapsedTime) + "\t\t" + ofToString(morphAmount1) + "\t\t" + ofToString(morphAmount2) << endl;
 
 }
 
@@ -153,8 +145,8 @@ void ofApp::update(){
 void ofApp::draw(){
 
     ofBackground(0);
-    videoSequence.draw(0, 0, ofGetWidth(), ofGetHeight());
-    esp.draw(morphAmount);
+    videoSequence.draw(0, 0, ofGetWidth(), ofGetHeight(), morphAmount1);
+    esp.draw(morphAmount1);
 
 }
 
@@ -177,18 +169,25 @@ void ofApp::keyPressed(int key){
     if( key == 'e' ) esp.soundStream.stop();
     
     // SoundOut
-    if(key == 'l') soundOut.lowpass2.showUI();
+    if(key == 'l') {
+        soundOut.lowpass1.showUI();
+        soundOut.lowpass2.showUI();
+    }
     if(key == 'd') {
         soundOut.distortion1.showUI();
         soundOut.distortion2.showUI();
     }
-    if(key == 'c') soundOut.lowpass2.showUI();
+    if(key == 'm') {
+        soundOut.mixer1.showUI();
+        soundOut.mixer2.showUI();
+    }
+    if(key == 'c') soundOut.compressor.showUI();
 
     // VideoSequence
     if ( key == ' ' ) {
         vidSeqEndId = -1;
         vidSeqOrder = "StartToEnd";
-        getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration, "Init");
+        getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration, "Load");
         getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration, "None");
     }
 
@@ -200,7 +199,7 @@ void ofApp::getVideosPath(string & vidSeqOrder, int & vidSeqEndId, vector<string
     string request = serverURL + "/getpath?num_neighbors="+ofToString(num_videos)+"&duration="+ofToString(duration)+"&order="+vidSeqOrder+"&start_id="+ofToString(vidSeqEndId);
     cout << request + "\n"<< endl;
     loading = true;
-    // mode = Add, Init, Save, None
+    // mode = Add, Load, Save, None
     int id = ofLoadURLAsync(request, "getVideosPath"+mode);
 //    if (response.open(request)) {
 //        vidSeqEndId = parseResponse(response, videoFiles, videoPoems, videoDesc, timeStartEnd);
@@ -214,7 +213,7 @@ void ofApp::getSimilarVideos(int & vidSeqEndId, vector<string> & videoFiles, vec
     string request = serverURL + "/getsimilarvideos?num_neighbors="+ofToString(num_videos)+"&duration="+ofToString(duration)+"&id="+ofToString(vidSeqEndId);
     cout << request + "\n" << endl;
     loading = true;
-    // mode = Add, Init, Save, None
+    // mode = Add, Load, Save, None
     int id = ofLoadURLAsync(request, "getSimilarVideos"+mode);
 //    if (response.open(request)) {
 //        vidSeqEndId =  parseResponse(response, videoFiles, videoPoems, videoDesc, timeStartEnd);
@@ -254,9 +253,9 @@ void ofApp::urlResponse(ofHttpResponse & response) {
         if (response.request.name == "getSimilarVideosAdd")  {
             vidSeqEndId =  parseResponse(r, videoFiles, videoPoems, videoDesc, timeStartEnd);
             videoSequence.add(videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqSimVidfadeDuration, false, true);
-        } else if (response.request.name == "getSimilarVideosInit")  {
+        } else if (response.request.name == "getSimilarVideosLoad")  {
             vidSeqEndId =  parseResponse(r, videoFiles, videoPoems, videoDesc, timeStartEnd);
-            videoSequence.init(videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqSimVidfadeDuration, true);
+            videoSequence.load(videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqSimVidfadeDuration, true);
         } else if (response.request.name == "getSimilarVideosSave")  {
             vidSeqEndId =  parseResponse(r, videoFilesSaved, videoPoemsSaved, videoDescSaved, timeStartEndSaved);
         } else if (response.request.name == "getSimilarVideosNone")  {
@@ -266,9 +265,9 @@ void ofApp::urlResponse(ofHttpResponse & response) {
             vidSeqEndId =  parseResponse(r, videoFiles, videoPoems, videoDesc, timeStartEnd);
             videoSequence.add(videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqSimVidfadeDuration, false, true);
             vidSeqOrder = ( vidSeqOrder == "StartToEnd" ) ? "EndToStart" : "StartToEnd";
-        } else if (response.request.name == "getVideosPathInit")  {
+        } else if (response.request.name == "getVideosPathLoad")  {
             vidSeqEndId =  parseResponse(r, videoFiles, videoPoems, videoDesc, timeStartEnd);
-            videoSequence.init(videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqSimVidfadeDuration, true);
+            videoSequence.load(videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqSimVidfadeDuration, true);
             vidSeqOrder = ( vidSeqOrder == "StartToEnd" ) ? "EndToStart" : "StartToEnd";
         } else if (response.request.name == "getVideosPathSave")  {
             vidSeqEndId =  parseResponse(r, videoFilesSaved, videoPoemsSaved, videoDescSaved, timeStartEndSaved);
@@ -283,6 +282,47 @@ void ofApp::urlResponse(ofHttpResponse & response) {
     }
 }
 
+//--------------------------------------------------------------
+void ofApp::startSoundMode(int mode){
+    if (soundMode != mode) {
+        totalTime = elapsedTime;
+        startTime = ofGetElapsedTimeMillis();
+        lastmorphAmount1 = morphAmount1;
+        lastmorphAmount2 = morphAmount2;
+        soundOut.startMorph();
+        soundMode = mode;
+        cout << soundMode << endl;
+    }
+}
+
+//--------------------------------------------------------------
+void ofApp::updateSoundMode(int mode, float & m1, float & m2){
+    // Ascent :)
+    if (mode == 4) {
+        if (elapsedTime < ascendDuration) elapsedTime = totalTime + (ofGetElapsedTimeMillis() - startTime);
+        morphAmount1 = ofMap(elapsedTime, totalTime, ascendDuration, lastmorphAmount1, 2);
+        morphAmount2 = ofMap(elapsedTime, totalTime, ascendDuration, lastmorphAmount2, 1);
+        // Descent :(
+    } else if (mode == 1) {
+        if ( elapsedTime < totalTime - descentDuration) elapsedTime = 0;
+        if (elapsedTime > 0) elapsedTime = totalTime - (ofGetElapsedTimeMillis() - startTime);
+        morphAmount1 = ofMap(elapsedTime, totalTime, max(0, totalTime-descentDuration), lastmorphAmount1, 0);
+        morphAmount2 = ofMap(elapsedTime, totalTime, max(0, totalTime-descentDuration), lastmorphAmount2, 0);
+        // Drop :D
+    } else if (mode == 5) {
+        float t = (ofGetElapsedTimeMillis() - startTime);
+        if ( t > tripDuration) {
+            morphAmount2 = ofMap(t, tripDuration, tripDuration+dropDuration, lastmorphAmount2, 0);
+        }
+        morphAmount1 = 1;
+    }
+    // morphAmount 0 --> 2 (clamp it)
+    // morphAmount1 = short, morphAmount2 = long
+    morphAmount1 = ofClamp(morphAmount1, 0, 1);
+    morphAmount2 = ofClamp(morphAmount2, 0, 1);
+    //    morphAmount1 = easing.easeInQuad(morphAmount1);
+    //    morphAmount2 = easing.easeInQuad(morphAmount2);
+}
 
 //--------------------------------------------------------------
 void ofApp::keyReleased(int key){

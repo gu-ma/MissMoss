@@ -5,6 +5,7 @@
 
 #include "ofEsp.h"
 #include "ofSoundOut.h"
+#include "LogAudio.h"
 #include "ofVideoSequence.h"
 #include "easing.h"
 
@@ -56,10 +57,13 @@ public:
     int parseResponse(ofxJSONElement & response, vector<string> & videoFiles, vector<string> & videoPoems, vector<string> & videoDesc, vector<ofVec2f> & timeStartEnd);
     
     // GENERAL
-    int mode;
-    int startTime, endTime, totalTime, elapsedTime;
-    int tripDuration, descentDuration;
-    float morphAmount, lastmorphAmount;
     Easing easing;
-
+    int videoMode, soundMode;
+    int startTime, endTime, totalTime, elapsedTime;
+    int ascendDuration, tripDuration, dropDuration, descentDuration;
+    float morphAmount1, lastmorphAmount1;
+    float morphAmount2, lastmorphAmount2;
+    void startSoundMode(int mode);
+    void updateSoundMode(int mode, float & m1, float & m2);
+    
 };
