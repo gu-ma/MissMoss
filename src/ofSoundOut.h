@@ -38,6 +38,8 @@ public:
         
         // Mixer 1
         mixer1.setInputBusCount(3);
+        outputMain.setDevice(203);   // MBP
+
 //        outputMain.setDevice(47);
 //        source1.connectTo(distortion).connectTo(tap1).connectTo(mixer1, 0);
 //        source2.connectTo(delay).connectTo(tap2).connectTo(mixer1, 1);
@@ -50,7 +52,8 @@ public:
         // Mixer 2
         cout << "\n[ofxAudioUnit] Output devices\n";
         outputBass1.listOutputDevices();
-        outputBass1.setDevice(62); // Bluetooth bass
+        outputBass1.setDevice(217); // Bluetooth bass (iMAC)
+//        outputBass1.setDevice(62); // Bluetooth bass (iMAC)
         //
         mixer2.setInputBusCount(1);
         source4.connectTo(lowpass2).connectTo(tap4).connectTo(mixer2, 0);
@@ -136,7 +139,7 @@ public:
         mixer1.setInputVolume(m3, 0);
         mixer1.setInputVolume(m3, 1);
         mixer1.setInputVolume(1-m3, 2);
-//        mixer2.setInputVolume(m3, 0);
+        mixer2.setInputVolume(m3, 0);
         // ------- DISTO 01 (BASS)
         // DELAY
 //        AudioUnitSetParameter(distortion1, kDistortionParam_Decay, kAudioUnitScope_Global, 0, ofMap(m2, 0, 1, 0, 10), 0);
