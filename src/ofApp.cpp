@@ -90,9 +90,9 @@ void ofApp::update(){
     videoSequence.update();
 
     // 'Touching'
-    if (esp.predicted_label == 4) {
+    if (esp.predicted_label == 4 || esp.predicted_label == 3 || esp.predicted_label == 2) {
         if (videoMode != 4) {
-            videoSequence.add(videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathfadeDuration, false, true);
+            videoSequence.add(videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathfadeDuration, false, true, false);
             getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration, "None");
             // Save video for reload later
             getSimilarVideos(vidSeqEndIdSaved, videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqSimVidNumVideos, vidSeqSimVidVideosDuration, "Save");
@@ -100,15 +100,15 @@ void ofApp::update(){
         }
         // Keep adding videos to the path
         if ( videoSequence.isFinished() ) {
-            videoSequence.add(videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathfadeDuration, false, false);
+            videoSequence.add(videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathfadeDuration, false, true, false);
             getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration, "None");
         }
         
-    // 'Tickling'
-    } else if (esp.predicted_label == 3) {
-        
-    // 'Hovering'
-    } else if (esp.predicted_label == 2) {
+//    // 'Tickling'
+//    } else if (esp.predicted_label == 3) {
+//
+//    // 'Hovering'
+//    } else if (esp.predicted_label == 2) {
 
     // 'No Hands'
     } else if (esp.predicted_label == 1) {
@@ -117,7 +117,7 @@ void ofApp::update(){
             vidSeqOrder = "StartToEnd";
             vidSeqEndId = -1;
 //            videoSequence.load(videoFilesSaved, videoPoemsSaved, videoDescSaved, timeStartEndSaved, vidSeqSimVidfadeDuration, true);
-            videoSequence.add(videoFilesSaved, videoPoemsSaved, videoDescSaved, timeStartEndSaved, vidSeqSimVidfadeDuration, true, true);
+            videoSequence.add(videoFilesSaved, videoPoemsSaved, videoDescSaved, timeStartEndSaved, vidSeqSimVidfadeDuration, true, true, true);
             getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration, "None");
             videoMode = 1;
         }
@@ -252,7 +252,7 @@ void ofApp::urlResponse(ofHttpResponse & response) {
         //
         if (response.request.name == "getSimilarVideosAdd")  {
             vidSeqEndId =  parseResponse(r, videoFiles, videoPoems, videoDesc, timeStartEnd);
-            videoSequence.add(videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqSimVidfadeDuration, false, true);
+            videoSequence.add(videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqSimVidfadeDuration, false, true, false);
         } else if (response.request.name == "getSimilarVideosLoad")  {
             vidSeqEndId =  parseResponse(r, videoFiles, videoPoems, videoDesc, timeStartEnd);
             videoSequence.load(videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqSimVidfadeDuration, true);
@@ -263,7 +263,7 @@ void ofApp::urlResponse(ofHttpResponse & response) {
         //
         } else if (response.request.name == "getVideosPathAdd")  {
             vidSeqEndId =  parseResponse(r, videoFiles, videoPoems, videoDesc, timeStartEnd);
-            videoSequence.add(videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqSimVidfadeDuration, false, true);
+            videoSequence.add(videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqSimVidfadeDuration, false, true, false);
             vidSeqOrder = ( vidSeqOrder == "StartToEnd" ) ? "EndToStart" : "StartToEnd";
         } else if (response.request.name == "getVideosPathLoad")  {
             vidSeqEndId =  parseResponse(r, videoFiles, videoPoems, videoDesc, timeStartEnd);

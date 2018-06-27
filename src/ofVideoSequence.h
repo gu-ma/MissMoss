@@ -136,14 +136,22 @@ public:
         activeLoop = 1;
     }
     
-    void add(vector<string> & videoFiles, vector<string> & videoPoems, vector<string> & videoDesc, vector<ofVec2f> & timeStartEnd, float fadeDuration, bool loop, bool continuous){
+    void add(vector<string> & videoFiles, vector<string> & videoPoems, vector<string> & videoDesc, vector<ofVec2f> & timeStartEnd, float fadeDuration, bool loop, bool continuous, bool clear){
         this->indexLoopStart = 0;
+        int indexInsert = this->index;
+//        if (clear && this->initialised) {
+//            this->videoFiles.erase (this->videoFiles.begin(), this->videoFiles.begin()+this->index);
+//            this->videoPoems.erase (this->videoPoems.begin(), this->videoPoems.begin()+this->index);
+//            this->videoDesc.erase (this->videoDesc.begin(), this->videoDesc.begin()+this->index);
+//            this->timeStartEnd.erase (this->timeStartEnd.begin(), this->timeStartEnd.begin()+this->index);
+//            indexInsert = 0;
+//        }
         if (continuous && this->initialised) {
-            this->videoFiles.erase (this->videoFiles.begin()+this->index, this->videoFiles.end());
-            this->videoPoems.erase (this->videoPoems.begin()+this->index, this->videoPoems.end());
-            this->videoDesc.erase (this->videoDesc.begin()+this->index, this->videoDesc.end());
-            this->timeStartEnd.erase (this->timeStartEnd.begin()+this->index, this->timeStartEnd.end());
-            this->indexLoopStart = this->index;
+            this->videoFiles.erase (this->videoFiles.begin()+indexInsert, this->videoFiles.end());
+            this->videoPoems.erase (this->videoPoems.begin()+indexInsert, this->videoPoems.end());
+            this->videoDesc.erase (this->videoDesc.begin()+indexInsert, this->videoDesc.end());
+            this->timeStartEnd.erase (this->timeStartEnd.begin()+indexInsert, this->timeStartEnd.end());
+            this->indexLoopStart = indexInsert;
         }
         this->videoFiles.insert(this->videoFiles.end(), videoFiles.begin(), videoFiles.end());
         this->videoPoems.insert(this->videoPoems.end(), videoPoems.begin(), videoPoems.end());
