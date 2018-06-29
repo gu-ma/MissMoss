@@ -60,7 +60,7 @@ public:
     Easing easing;
     int videoMode, soundMode;
     int startTime, endTime, totalTime, elapsedTime;
-    int ascendDuration, tripDuration, dropDuration, descentDuration;
+    int ascendDuration1, ascendDuration2, tripDuration, dropDuration, descentDuration;
     float morphAmount1, lastmorphAmount1;
     float morphAmount2, lastmorphAmount2;
     void startSoundMode(int mode);
