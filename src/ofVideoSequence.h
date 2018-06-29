@@ -81,10 +81,10 @@ public:
         void start() {
             if ( !this->playing ) {
                 this->videoPlayer.play();
-                if ( !this->tts.startSpeaking && this->showPoem) {
-                    //                  _voice, _pbas, _pmod, _rate, _volm, _rawMsg
-                    this->tts.logAudio("Fred", "", "", "130", "0.5", this->poem);
-                }
+//                if ( !this->tts.startSpeaking && this->showPoem) {
+//                    //                  _voice, _pbas, _pmod, _rate, _volm, _rawMsg
+//                    this->tts.logAudio("Fred", "", "", "130", "0.5", this->poem);
+//                }
                 this->playing = true;
             }
         }

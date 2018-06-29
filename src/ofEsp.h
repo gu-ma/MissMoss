@@ -147,7 +147,7 @@ public:
 //        pan = (float)ofGetMouseX() / (float)ofGetWidth();
 //        float height = (float)ofGetHeight();
 //        float heightPct = ((height-ofGetMouseY()) / height);
-        volume = (1-morphAmount1)*0.005f;
+        volume = (1-morphAmount1)*0.05f;
         targetFrequency = 100 + 500.0f * data_point_var_norm;
         phaseAdderTarget = (targetFrequency / (float) sampleRate) * TWO_PI;
     }

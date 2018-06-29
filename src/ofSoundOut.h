@@ -38,9 +38,9 @@ public:
         
         // Mixer 1
         mixer1.setInputBusCount(3);
-//        outputMain.setDevice(203);   // MBP
+        outputMain.setDevice(47);   // MBP
 
-        outputMain.setDevice(47);
+//        outputMain.setDevice(51);
 //        source1.connectTo(distortion).connectTo(tap1).connectTo(mixer1, 0);
 //        source2.connectTo(delay).connectTo(tap2).connectTo(mixer1, 1);
 //        source3.connectTo(lowpass1).connectTo(tap3).connectTo(mixer1, 2);
@@ -151,7 +151,7 @@ public:
         // RINGMOD
         AudioUnitSetParameter(distortion1, kDistortionParam_RingModMix, kAudioUnitScope_Global, 0, ofMap(m2, 0, 1, 0, 20), 0);
         // GENERAL
-        AudioUnitSetParameter(distortion1, kDistortionParam_FinalMix, kAudioUnitScope_Global, 0, ofMap(m2, 0, 1, 0, 20), 0);
+        AudioUnitSetParameter(distortion1, kDistortionParam_FinalMix, kAudioUnitScope_Global, 0, ofMap(m2, 0, 1, 0, 10), 0);
         // ------- DISTO 02 (KICK)
         // DELAY
 //        AudioUnitSetParameter(distortion2, kDistortionParam_Decay, kAudioUnitScope_Global, 0, ofMap(m2, 0, 1, 0, 10), 0);
@@ -161,7 +161,7 @@ public:
         // RINGMOD
         AudioUnitSetParameter(distortion2, kDistortionParam_RingModMix, kAudioUnitScope_Global, 0, ofMap(m2, 0, 1, 0, 20), 0);
         // GENERAL
-        AudioUnitSetParameter(distortion2, kDistortionParam_FinalMix, kAudioUnitScope_Global, 0, ofMap(m2, 0, 1, 0, 30), 0);
+        AudioUnitSetParameter(distortion2, kDistortionParam_FinalMix, kAudioUnitScope_Global, 0, ofMap(m2, 0, 1, 0, 10), 0);
         // ------- LOWPASS 01 (BASS) + 02 (BASS SOUNDWAVER)
 //        AudioUnitSetParameter(lowpass1, kLowPassParam_Resonance, kAudioUnitScope_Global, 0, ofMap(m2, 0, 1, 0, 7), 0);
         AudioUnitSetParameter(lowpass2, kLowPassParam_Resonance, kAudioUnitScope_Global, 0, ofMap(m2, 0, 1, 0, 7), 0);
