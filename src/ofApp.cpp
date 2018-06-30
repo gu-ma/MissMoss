@@ -54,7 +54,7 @@ void ofApp::setup(){
     endTime = 0;
     totalTime = 0;
     ascendDuration1 = 10000;
-    ascendDuration2 = 20000;
+    ascendDuration2 = 25000;
     tripDuration = 10000;
     dropDuration = 500;
     descentDuration = 5000;
@@ -62,6 +62,7 @@ void ofApp::setup(){
     lastmorphAmount1 = 0;
     morphAmount2 = 0;
     lastmorphAmount2 = 0;
+    maxVolume = 0;
 
     // TEMP
     esp.predicted_label = 1;
@@ -85,7 +86,7 @@ void ofApp::update(){
     esp.update(morphAmount1);
     
     // SOUND
-    soundOut.update(morphAmount1, morphAmount2);
+    soundOut.update(morphAmount1, morphAmount2, maxVolume);
 
     // Video Sequence
     videoSequence.update();
@@ -97,13 +98,13 @@ void ofApp::update(){
             vidSeqOrder = "StartToEnd";
             vidSeqEndId = -1;
 //            videoSequence.load(videoFilesSaved, videoPoemsSaved, videoDescSaved, timeStartEndSaved, vidSeqSimVidfadeDuration, true);
-            videoSequence.add(videoFilesSaved, videoPoemsSaved, videoDescSaved, timeStartEndSaved, vidSeqSimVidfadeDuration, true, true, true);
+            videoSequence.add(videoFilesSaved, videoPoemsSaved, videoDescSaved, timeStartEndSaved, vidSeqSimVidfadeDuration, true, true, true, true);
             getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration, "None");
             videoMode = 1;
         }
     } else {
         if (videoMode != 4) {
-            videoSequence.add(videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathfadeDuration, false, true, false);
+            videoSequence.add(videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathfadeDuration, false, true, false, true);
             getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration, "None");
             // Save video for reload later
             getSimilarVideos(vidSeqEndIdSaved, videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqSimVidNumVideos, vidSeqSimVidVideosDuration, "Save");
@@ -111,7 +112,7 @@ void ofApp::update(){
         }
         // Keep adding videos to the path
         if ( videoSequence.isFinished() ) {
-            videoSequence.add(videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathfadeDuration, false, true, false);
+            videoSequence.add(videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathfadeDuration, false, true, false, true);
             getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration, "None");
         }
     }
@@ -120,14 +121,14 @@ void ofApp::update(){
     if (esp.predicted_label == 4) {
         if (elapsedTime < ascendDuration2) {
             startSoundMode(4);
-            updateSoundMode(4, morphAmount1, morphAmount2);
+            updateSoundMode(4, morphAmount1, morphAmount2, maxVolume);
         } else {
             startSoundMode(5);
-            updateSoundMode(5, morphAmount1, morphAmount2);
+            updateSoundMode(5, morphAmount1, morphAmount2, maxVolume);
         }
     } else if (esp.predicted_label == 1) {
         startSoundMode(1);
-        updateSoundMode(1, morphAmount1, morphAmount2);
+        updateSoundMode(1, morphAmount1, morphAmount2, maxVolume);
     }
     
 //    cout << ofToString(elapsedTime) + "\t\t" + ofToString(morphAmount1) + "\t\t" + ofToString(morphAmount2) << endl;
@@ -174,7 +175,9 @@ void ofApp::keyPressed(int key){
         soundOut.mixer1.showUI();
         soundOut.mixer2.showUI();
     }
-    if(key == 'c') soundOut.compressor.showUI();
+    if(key == 'c') {
+        soundOut.compressor.showUI();
+    }
 
     // VideoSequence
     if ( key == ' ' ) {
@@ -245,7 +248,7 @@ void ofApp::urlResponse(ofHttpResponse & response) {
         //
         if (response.request.name == "getSimilarVideosAdd")  {
             vidSeqEndId =  parseResponse(r, videoFiles, videoPoems, videoDesc, timeStartEnd);
-            videoSequence.add(videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqSimVidfadeDuration, false, true, true);
+            videoSequence.add(videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqSimVidfadeDuration, false, true, true, false);
         } else if (response.request.name == "getSimilarVideosLoad")  {
             vidSeqEndId =  parseResponse(r, videoFiles, videoPoems, videoDesc, timeStartEnd);
             videoSequence.load(videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqSimVidfadeDuration, true);
@@ -256,7 +259,7 @@ void ofApp::urlResponse(ofHttpResponse & response) {
         //
         } else if (response.request.name == "getVideosPathAdd")  {
             vidSeqEndId =  parseResponse(r, videoFiles, videoPoems, videoDesc, timeStartEnd);
-            videoSequence.add(videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqSimVidfadeDuration, false, true, false);
+            videoSequence.add(videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqSimVidfadeDuration, false, true, false, true);
             vidSeqOrder = ( vidSeqOrder == "StartToEnd" ) ? "EndToStart" : "StartToEnd";
         } else if (response.request.name == "getVideosPathLoad")  {
             vidSeqEndId =  parseResponse(r, videoFiles, videoPoems, videoDesc, timeStartEnd);
@@ -289,23 +292,27 @@ void ofApp::startSoundMode(int mode){
 }
 
 //--------------------------------------------------------------
-void ofApp::updateSoundMode(int mode, float & m1, float & m2){
+void ofApp::updateSoundMode(int mode, float & m1, float & m2, float & maxVolume){
     // Ascent :)
     if (mode == 4) {
         if (elapsedTime < ascendDuration2) elapsedTime = totalTime + (ofGetElapsedTimeMillis() - startTime);
         morphAmount1 = ofMap(elapsedTime, totalTime, ascendDuration2, lastmorphAmount1, 2);
         morphAmount2 = ofMap(elapsedTime, totalTime+ascendDuration1, ascendDuration2, lastmorphAmount2, 1);
+        maxVolume = .9;
         // Descent :(
     } else if (mode == 1) {
         if ( elapsedTime < totalTime - descentDuration) elapsedTime = 0;
         if (elapsedTime > 0) elapsedTime = totalTime - (ofGetElapsedTimeMillis() - startTime);
         morphAmount1 = ofMap(elapsedTime, totalTime, max(0, totalTime-descentDuration), lastmorphAmount1, 0);
         morphAmount2 = ofMap(elapsedTime, totalTime, max(0, totalTime-descentDuration), lastmorphAmount2, 0);
+        maxVolume = .9;
         // Drop :D
     } else if (mode == 5) {
         float t = (ofGetElapsedTimeMillis() - startTime);
         if ( t > tripDuration) {
+            morphAmount1 = ofMap(t, tripDuration, tripDuration+dropDuration, lastmorphAmount2, 0);
             morphAmount2 = ofMap(t, tripDuration, tripDuration+dropDuration, lastmorphAmount2, 0);
+            maxVolume = 1;
         }
         morphAmount1 = 1;
     }

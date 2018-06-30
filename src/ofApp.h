@@ -61,9 +61,9 @@ public:
     int videoMode, soundMode;
     int startTime, endTime, totalTime, elapsedTime;
     int ascendDuration1, ascendDuration2, tripDuration, dropDuration, descentDuration;
-    float morphAmount1, lastmorphAmount1;
+    float morphAmount1, lastmorphAmount1, maxVolume;
     float morphAmount2, lastmorphAmount2;
     void startSoundMode(int mode);
-    void updateSoundMode(int mode, float & m1, float & m2);
+    void updateSoundMode(int mode, float & m1, float & m2, float & maxVol);
     
 };

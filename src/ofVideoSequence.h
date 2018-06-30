@@ -28,12 +28,12 @@ public:
             font.load("Botanika-3-Lite.otf", 34);
         }
         
-        void load(string videoFile, string videoPoem, int timeStart, int timeEnd, bool loop, float fadeDuration){
+        void load(string videoFile, string videoPoem, int timeStart, int timeEnd, bool loop, float fadeDuration, bool showPoem){
             this->playing = false;
             this->finished = false;
             this->fade = false;
             this->poem = videoPoem;
-            this->showPoem = ofRandomf()>.5;
+            this->showPoem = showPoem ? ofRandomf()>0 : false;
             this->videoPlayer.load(videoFile);
             this->videoPlayer.setVolume(0);
             if (loop) this->videoPlayer.setLoopState(OF_LOOP_NORMAL);
@@ -110,7 +110,7 @@ public:
     int indexLoopStart, indexLoopEnd;
     float fadeDuration;
     VideoLoop vidLoop1, vidLoop2;
-    bool finished, loop, initialised;
+    bool finished, loop, initialised, showPoem;
     
     void init() {
         this->vidLoop1.init();
@@ -136,7 +136,7 @@ public:
         activeLoop = 1;
     }
     
-    void add(vector<string> & videoFiles, vector<string> & videoPoems, vector<string> & videoDesc, vector<ofVec2f> & timeStartEnd, float fadeDuration, bool loop, bool continuous, bool clear){
+    void add(vector<string> & videoFiles, vector<string> & videoPoems, vector<string> & videoDesc, vector<ofVec2f> & timeStartEnd, float fadeDuration, bool loop, bool continuous, bool clear, bool showPoem){
         this->indexLoopStart = 0;
         int indexInsert = this->index;
 //        if (clear && this->initialised) {
@@ -163,6 +163,7 @@ public:
         this->finished = false;
         this->initialised = true;
         this->loop = loop;
+        this->showPoem = showPoem;
         this->indexLoopEnd = numScenes-1;
 
     }
@@ -200,7 +201,7 @@ public:
     }
     
     void loadNextVideo(VideoLoop & loop, float fadeDuration){
-        loop.load( this->videoFiles[this->index], this->videoPoems[this->index], this->timeStartEnd[this->index][0], this->timeStartEnd[this->index][1], true, fadeDuration);
+        loop.load( this->videoFiles[this->index], this->videoPoems[this->index], this->timeStartEnd[this->index][0], this->timeStartEnd[this->index][1], true, fadeDuration, this->showPoem);
         if ( this->index == this->numScenes-1 ) this->finished = true;
         // Set into loop mode ONLY when adding files repeatly
         if ( this->loop ) this->index = ( this->index < this->indexLoopEnd ) ? this->index+1 : this->indexLoopStart ;
