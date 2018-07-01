@@ -97,8 +97,8 @@ void ofApp::update(){
             // Start the idle videoMode
             vidSeqOrder = "StartToEnd";
             vidSeqEndId = -1;
-//            videoSequence.load(videoFilesSaved, videoPoemsSaved, videoDescSaved, timeStartEndSaved, vidSeqSimVidfadeDuration, true);
-            videoSequence.add(videoFilesSaved, videoPoemsSaved, videoDescSaved, timeStartEndSaved, vidSeqSimVidfadeDuration, true, true, true, true);
+            videoSequence.load(videoFilesSaved, videoPoemsSaved, videoDescSaved, timeStartEndSaved, vidSeqSimVidfadeDuration, true);
+//            videoSequence.add(videoFilesSaved, videoPoemsSaved, videoDescSaved, timeStartEndSaved, vidSeqSimVidfadeDuration, true, true, true, true);
             getVideosPath(vidSeqOrder, vidSeqEndId, videoFiles, videoPoems, videoDesc, timeStartEnd, vidSeqPathNumVideos, vidSeqPathVideosDuration, "None");
             videoMode = 1;
         }
@@ -233,6 +233,7 @@ int ofApp::parseResponse(ofxJSONElement & response, vector<string> & videoFiles,
         videoPoems.push_back(poem);
         videoDesc.push_back(desc);
         timeStartEnd.push_back(ofVec2f(start_time, end_time));
+        cout << ofToString(ofVec2f(start_time, end_time)) << endl;
 //        cout << response["scenes"][i] << endl;
     }
     return response["scenes"][numScenes-1]["end_id"].asInt();

@@ -28,18 +28,20 @@ public:
             font.load("Botanika-3-Lite.otf", 34);
         }
         
-        void load(string videoFile, string videoPoem, int timeStart, int timeEnd, bool loop, float fadeDuration, bool showPoem){
+        void load(string videoFile, string videoPoem, float timeStart, float timeEnd, bool loop, float fadeDuration, bool showPoem){
             this->playing = false;
             this->finished = false;
             this->fade = false;
             this->poem = videoPoem;
-            this->showPoem = showPoem ? ofRandomf()>0 : false;
+            this->showPoem = (showPoem) ? ofRandomf()>0 : false;
             this->videoPlayer.load(videoFile);
             this->videoPlayer.setVolume(0);
             if (loop) this->videoPlayer.setLoopState(OF_LOOP_NORMAL);
             this->start_pct = timeStart / this->videoPlayer.getDuration();
             this->end_pct = timeEnd / this->videoPlayer.getDuration();
             float fade_duration_pct = fadeDuration / this->videoPlayer.getDuration();
+            cout << ofToString(timeStart) + " " +  ofToString(timeEnd) << endl;
+            cout << ofToString(this->start_pct) + " " + ofToString(this->videoPlayer.getPosition()) + " " + ofToString(this->end_pct) << endl;
             this->fade_start_pct = ( this->end_pct-fade_duration_pct > this->start_pct ) ? this->end_pct-fade_duration_pct : this->start_pct;
             this->videoPlayer.setPosition(this->start_pct);
             this->movieFbo.allocate(this->videoPlayer.getWidth(), this->videoPlayer.getHeight());
@@ -53,12 +55,13 @@ public:
             if ( this->videoPlayer.isLoaded() && this->videoPlayer.isInitialized() ) {
                 if ( this->videoPlayer.getPosition() < this->start_pct ) this->videoPlayer.setPosition(this->start_pct);
                 if ( this->videoPlayer.getPosition() >= this->fade_start_pct ) this->fade = true;
-                if ( this->videoPlayer.getPosition() >= this->end_pct || this->videoPlayer.getPosition() >= 1 ) {
+                if ( this->videoPlayer.getPosition() >= this->end_pct || this->videoPlayer.getPosition() >= .97 ) {
                     this->finished = true;
                     this->stop();
                 }
             }
             this->videoPlayer.update();
+//            cout << ofToString(this->start_pct) + " " + ofToString(this->videoPlayer.getPosition()) + " " + ofToString(this->end_pct) << endl;
         }
         
         void draw(int x, int y, int w, int h) {
